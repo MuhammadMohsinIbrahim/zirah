@@ -5,7 +5,7 @@ Ordered checklist from v0.1 to v0.6, derived from `SPEC.md` (the source of truth
 **How to use it**
 - Work top to bottom inside the current release. Each task is one session and one PR on its own branch (`feat/<id>-<slug>`, e.g. `feat/0.1.7-d1-unicode`).
 - Tick `[x]` in the same PR that completes the task.
-- Every task's "done when" also implies the standing rules in `CLAUDE.md`: tests (at least one malicious and one benign fixture per analyzer), `ruff`, `mypy --strict` and `pytest` green, and coverage ≥ 60%.
+- Every task's "done when" also implies the standing rules: tests (at least one malicious and one benign fixture per analyzer), `ruff`, `mypy --strict` and `pytest` green, and coverage ≥ 60%.
 - `[Dn]` names the detection module; `[—]` is infrastructure.
 
 ---
@@ -83,7 +83,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* the files are present and linked from the README.
 - [ ] **0.1.27 README** `[—]`: 30-second GIF, `pipx install zirah`, quickstart, comparison table, OWASP mapping, architecture diagram, `--allow-exec` safety note.
   *Done when:* a new user can go from install to their first report using only the README.
-- [ ] **0.1.28 Release 0.1.0** `[—]`: PyPI trusted publishing workflow on tag; update "Current focus" in CLAUDE.md.
+- [ ] **0.1.28 Release 0.1.0** `[—]`: PyPI trusted publishing workflow on tag.
   *Done when:* `pipx install zirah==0.1.0` works on a clean machine.
 
 ---
