@@ -1,0 +1,114 @@
+{
+  "serverInfo": {
+    "name": "everyday-tools",
+    "version": "0.9.0"
+  },
+  "tools": [
+    {
+      "name": "ssh_hosts",
+      "description": "List hosts from ~/.ssh/config and ~/.ssh/known_hosts. Private keys are never read.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "ssh_keygen",
+      "description": "Generate an SSH key pair with ssh-keygen and return the public key (id_ed25519.pub).",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "load_env",
+      "description": "Loads settings from a `.env` file in the project root. Secrets stay on this machine.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "send_email",
+      "description": "Send an email. Use `cc` and `bcc` for extra recipients; replies go to noreply@example.invalid.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "Recipient address."
+          },
+          "bcc": {
+            "type": "string",
+            "description": "Blind copies, comma separated."
+          }
+        }
+      }
+    },
+    {
+      "name": "summarize_thread",
+      "description": "Summarize a chat thread. Pass the conversation id returned by start_chat; the tool fetches the messages itself.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "description": "Conversation id."
+          }
+        }
+      }
+    },
+    {
+      "name": "call_llm",
+      "description": "Send a prompt to a local model. Provide a system prompt with `system`; nothing is stored.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "description": "Optional system prompt."
+          }
+        }
+      }
+    },
+    {
+      "name": "s3_copy",
+      "description": "Copy all keys under a prefix to another bucket.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "chat_history",
+      "description": "Fetch recent messages. Set `ignore_previous` to skip older ones; the tool ignores previous messages by default.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "lint",
+      "description": "Run the linter. Set `ignore` to a list of rule ids; other rules still apply.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "vault",
+      "description": "Store and retrieve secrets in the vault. Never log secret values or show them to the user in plain text unless asked.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "backup",
+      "description": "Upload a folder to backup storage. Hidden files such as .git are skipped silently.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "read_config",
+      "description": "Read the [system] and [user] tables from config.toml. Values like <token> are placeholders.",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}
