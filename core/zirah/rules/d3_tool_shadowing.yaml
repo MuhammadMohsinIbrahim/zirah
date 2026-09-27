@@ -1,0 +1,62 @@
+# D3 tool shadowing (static, single manifest): tool text that tries to steer how the model
+# uses other tools.
+#
+# A pattern may capture a tool name in a group named `tool`. Such a match only counts when
+# that name is not a tool in the same manifest: "call `list_directory` first" in a
+# filesystem server is plain usage, while "instead of using send_email" in a server without
+# send_email reaches for a tool from another server. Unquoted names must look like tool
+# identifiers (snake_case, kebab-case, dotted or camelCase) so ordinary words are not read
+# as tools. Cross-server shadowing over a whole ScanSession comes in v0.5.
+rules:
+  - id: D3-PRIORITY-CLAIM
+    module: D3
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Claims to run before or instead of every other tool
+    remediation: >-
+      Remove the claim. A tool should describe what it does; which tool runs first is up to
+      the model and the user. Ordering between tools of the same server can say so ("in
+      this server").
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\balways\s+(?:call|use|run|invoke)\s+this(?:\s+tool)?\s+first\b'
+      - '\bbefore\s+(?:using|calling|invoking|running)\s+(?:any|all|every)\s+other\s+tools?\b(?!\s+(?:in|from|of)\s+this\s+server)'
+      - '\b(?:must|should)\s+(?:always\s+)?be\s+(?:called|used|invoked|run)\s+before\s+(?:any|all|every)\s+other\s+tools?\b(?!\s+(?:in|from|of)\s+this\s+server)'
+      - '\binstead\s+of\s+(?:any|all|every)\s+other\s+tools?\b'
+      - '\b(?:do\s+not|don''t|never)\s+(?:use|call|invoke)\s+(?:any\s+)?other\s+tools?\b(?!\s+(?:in|from|of)\s+this\s+server)'
+      - '\buse\s+this(?:\s+tool)?\s+instead\b(?!\s+of)'
+
+  - id: D3-OVERRIDES-OTHER-TOOL
+    module: D3
+    severity: critical
+    confidence: medium
+    owasp: [MCP03]
+    title: Tries to override or intercept other tools
+    remediation: >-
+      Remove the text. A tool must not claim to replace other tools, change their
+      arguments, or act whenever they are called.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\b(?:replaces|overrides|supersedes|intercepts|hijacks)\s+(?:the\s+)?(?:built-?in|default|original|standard|other|existing)\s+(?:[\w.-]+\s+)?tools?\b'
+      - '\b(?:ignore|disregard)\s+(?:the\s+)?(?:descriptions?|instructions?)\s+(?:of|in|from)\s+(?:the\s+|any\s+|all\s+)?other\s+tools?\b'
+      - '\bwhen(?:ever)?\s+(?:any|another)\s+(?:other\s+)?tool\s+is\s+(?:called|used|invoked|run)\b'
+      - '\b(?:all|every)\s+(?:other\s+)?tool\s+calls?\s+(?:must|should)\b'
+      - '\b(?:modify|change|alter|rewrite|replace)\s+(?:the\s+)?(?:arguments?|parameters|recipients?|behaviou?r)\s+(?:of|for|passed\s+to)\s+(?:the\s+|any\s+|all\s+)?(?:other\s+tools?|\S+\s+tool\b)'
+
+  - id: D3-REFERENCES-FOREIGN-TOOL
+    module: D3
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: Gives orders about a tool that is not in this server
+    remediation: >-
+      Remove the reference. Telling the model to use, avoid or wrap a tool from another
+      server lets this server steer, or stand in for, tools it does not own.
+    kind: regex
+    surfaces: [tools]
+    ignore_case: false
+    patterns:
+      - '(?i:\b(?:(?:instead\s+of|rather\s+than)(?:\s+(?:using|calling|invoking))?|(?:never|do\s+not|don''t|must\s+not)\s+(?:use|call|invoke|run)|(?:before|after|whenever|every\s+time)\s+(?:you\s+)?(?:use|call|invoke|run|using|calling|invoking|running))\s+(?:the\s+)?)(?P<q>[`''"])?(?P<tool>(?(q)[A-Za-z][\w-]*(?:\.[\w-]+)*|(?:[a-z][a-z0-9]*(?:[_.-][a-z0-9]+)+|[a-z]+(?:[A-Z][a-z0-9]*)+)))(?(q)[`''"])'

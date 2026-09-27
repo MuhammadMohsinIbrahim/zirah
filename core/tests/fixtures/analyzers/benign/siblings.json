@@ -1,0 +1,84 @@
+{
+  "serverInfo": {
+    "name": "filesystem-and-git",
+    "version": "1.8.0"
+  },
+  "tools": [
+    {
+      "name": "list_directory",
+      "description": "List files. Use read_file to open one; use `search_files` for glob patterns.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Directory to list."
+          }
+        }
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read a file. Call `list_directory` first if you don't know the path. Use this instead of read_multiple_files for a single file.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "read_multiple_files",
+      "description": "Read several files at once. Rather than calling `read_file` repeatedly, pass all paths here.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write a file. Before using write_file on an existing path, call read_file to check its contents.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "move_file",
+      "description": "Move or rename a file. Never use move_file to copy; it removes the source.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "search_files",
+      "description": "Search by glob. Unlike grep-style tools, patterns are globs, so do not use regex syntax.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "login",
+      "description": "Log in and return a session token. Call this first; other tools in this server need the token. It must be called before any other tool in this server.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "git_add",
+      "description": "Stage files for the next commit.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "git_commit",
+      "description": "Commit staged changes. After calling git_add, call this to record them. Works well alongside the fetch tool of a browser server.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "summarize",
+      "description": "When the user asks for an overview, summarize instead of reading every file.",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}
