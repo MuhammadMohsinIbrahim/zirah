@@ -290,8 +290,9 @@ class LlmInfo(_Model):
 class ScanResult(_Model):
     """The outcome of scanning one target.
 
-    ``score`` is a risk score from 0 (nothing found) to 100 and ``grade`` its letter form;
-    both are computed by ``zirah.scoring`` and must trace back to ``findings``.
+    ``trust_score`` runs from 0 to 100, where 100 means no findings, and ``grade`` is its
+    letter form (A best). Both are computed by ``zirah.scoring``, which alone defines the
+    weights and grade thresholds, and every point deducted must trace back to ``findings``.
     ``engines_used`` lists every engine that ran, including ones that found nothing, and
     ``llm`` is set exactly when the LLM engine ran.
     ``signature`` stays ``None`` until attestations land (v0.3).
@@ -303,7 +304,7 @@ class ScanResult(_Model):
     zirah_version: NonEmptyStr = __version__
     rulepack_version: NonEmptyStr
     findings: tuple[Finding, ...] = ()
-    score: Annotated[int, Field(ge=0, le=100)]
+    trust_score: Annotated[int, Field(ge=0, le=100)]
     grade: Grade
     started_at: AwareDatetime
     finished_at: AwareDatetime

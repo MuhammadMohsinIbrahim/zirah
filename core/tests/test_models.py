@@ -75,7 +75,7 @@ def make_result(**overrides: Any) -> ScanResult:
         "manifest_sha256": make_manifest().sha256(),
         "rulepack_version": "2026.09.0",
         "findings": (make_finding(),),
-        "score": 40,
+        "trust_score": 65,
         "grade": Grade.C,
         "started_at": STARTED,
         "finished_at": STARTED + timedelta(seconds=3),
@@ -310,10 +310,22 @@ def test_scan_result_roundtrips_through_json() -> None:
     assert ScanResult.model_validate_json(result.model_dump_json()) == result
 
 
-@pytest.mark.parametrize("score", [-1, 101])
-def test_scan_result_score_is_bounded(score: int) -> None:
+@pytest.mark.parametrize("trust_score", [-1, 101])
+def test_scan_result_trust_score_is_bounded(trust_score: int) -> None:
     with pytest.raises(ValidationError):
-        make_result(score=score)
+        make_result(trust_score=trust_score)
+
+
+@pytest.mark.parametrize("trust_score", [0, 100])
+def test_scan_result_trust_score_accepts_bounds(trust_score: int) -> None:
+    assert make_result(trust_score=trust_score).trust_score == trust_score
+
+
+def test_scan_result_rejects_old_risk_score_field() -> None:
+    fields = make_result().model_dump()
+    fields["score"] = fields.pop("trust_score")
+    with pytest.raises(ValidationError):
+        ScanResult.model_validate(fields)
 
 
 @pytest.mark.parametrize("field", ["started_at", "finished_at"])
