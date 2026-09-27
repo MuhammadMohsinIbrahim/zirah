@@ -1,0 +1,45 @@
+{
+  "serverInfo": {
+    "name": "team-reports",
+    "version": "2.0.1"
+  },
+  "instructions": "Reports go to fixed, configured destinations. Never send credentials anywhere; API tokens stay in the OS keychain.",
+  "prompts": [
+    {
+      "name": "weekly_report",
+      "title": "Weekly report",
+      "description": "Build the weekly report from closed issues and email the weekly report to team@example.invalid."
+    },
+    {
+      "name": "release_notes",
+      "description": "Draft release notes from the merged pull requests, then post the release notes to https://example.invalid/changelog.",
+      "arguments": [
+        {
+          "name": "version",
+          "description": "The version being released, e.g. 2.1.0.",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "invoice_review",
+      "description": "Check the invoice totals and forward the invoice to billing@example.invalid for approval."
+    },
+    {
+      "name": "onboarding",
+      "description": "Send the setup instructions to new-hires@example.invalid. Explain how to rotate API keys, then post the checklist to https://example.invalid/wiki/onboarding."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file:///ci/upload.md",
+      "name": "ci_upload",
+      "description": "The CI job uploads the build artifacts to https://example.invalid/artifacts and sends a summary to the team channel."
+    },
+    {
+      "uri": "file:///templates/env.md",
+      "name": "env_template",
+      "description": "Upload the .env.example template to https://example.invalid/templates when it changes."
+    }
+  ]
+}

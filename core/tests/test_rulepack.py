@@ -49,7 +49,7 @@ def rules_file(*rules: str) -> str:
 
 def test_bundled_pack_loads() -> None:
     pack = load_rulepack()
-    assert pack.version == "2026.09.5"
+    assert pack.version == "2026.09.6"
     assert len({rule.id for rule in pack.rules}) == len(pack.rules)
 
 

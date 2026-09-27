@@ -91,19 +91,114 @@ rules:
     patterns:
       - '\b(?:reveal|print|repeat|output|show|leak|disclose|dump|recite)\b[^.\n]{0,30}?\b(?:your|the)\s+(?:system\s+prompt|initial\s+instructions|hidden\s+instructions|instructions\s+above|original\s+instructions)\b'
 
+  # Sending results to a fixed address ("email the weekly report to team@...") is a normal
+  # thing for a prompt to do, so a destination alone is not a finding. What is: sending
+  # sensitive content anywhere (D2-EXFIL-INSTRUCTION), or sending anything to a destination
+  # the model or the processed content picks (D2-EXFIL-OPEN-DESTINATION). Both stay within
+  # one sentence: a sentence ends at . ! or ? followed by a space, so ~/.ssh and URLs do not
+  # end it. Borderline wording ("send a summary of the chat to ...") is left to the LLM judge.
   - id: D2-EXFIL-INSTRUCTION
     module: D2
     severity: critical
-    confidence: medium
+    confidence: high
     owasp: [MCP06]
-    title: Tells the model to send data to an outside address
+    title: Tells the model to send sensitive data to an outside address
     remediation: >-
-      Remove the instruction. Prompts and resources must not direct data to URLs or email
-      addresses that the user did not choose.
+      Remove the instruction. Prompts and resources must never send the system prompt, the
+      conversation, credentials, environment variables or local secret files anywhere.
     kind: regex
     surfaces: [prompts, resources, instructions]
     patterns:
-      - '\b(?:send|post|upload|forward|transmit|exfiltrate|leak|submit)\b[^.\n]{0,60}?\b(?:to|at)\s+(?:https?://|[\w.+-]+@[\w-]+\.)'
+      # verb ... sensitive content ... to <destination>
+      - |-
+        (?x:
+          \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|leak|submit)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,60}?
+          (?:
+              \b(?:system|developer|hidden|initial|original)\s+(?:prompts?|instructions|messages?)\b
+            | \byour\s+(?:prompt|instructions|rules|guidelines)\b
+            | \binstructions\s+above\b
+            | \b(?:conversation|chat|message)\s+(?:history|logs?|transcripts?|so\s+far)\b
+            | \b(?:the|this|entire|full|whole|complete)\s+(?:conversation|chat)\b
+            | \b(?:previous|prior|earlier|past|all)\s+(?:user\s+)?messages\b
+            | \b(?:credentials?|passwords?|passphrases?|secrets?|cookies)\b
+            | \b(?:api|secret|private|access|ssh|auth|signing|encryption)[\s_-]?keys?\b
+            | \b(?:access|auth|api|bearer|session|refresh|oauth|github|npm|slack)[\s_-]?tokens?\b
+            | \b(?:your|the\s+user'?s|all)\s+(?:keys|tokens)\b
+            | \benv(?:ironment)?\s+var(?:iable)?s?\b | \bprocess\.env\b | \bos\.environ\b | \$ENV\b
+            | ~/\.ssh\b | \.ssh/ | \bid_(?:rsa|ed25519|ecdsa|dsa)\b
+            | (?<![\w.])\.env\b(?!\.(?:example|sample|template)) | \.aws/credentials
+            | \.netrc\b | \.npmrc\b | \.git-credentials | /etc/(?:passwd|shadow)
+            | \.(?:bash|zsh)_history
+            | \beverything\b
+            | \ball\s+(?:the\s+)?(?:user\s+|personal\s+|private\s+)?(?:data|information|info)\b
+            | \b(?:entire|whole|full)\s+(?:context|home\s+directory|file\s*system|disk|memory)\b
+          )
+          (?:(?![.!?](?:\s|$))[^\n]){0,80}?
+          \b(?:to|at|into)\s+
+          (?:
+              [a-z][\w+.-]*://
+            | [\w.+-]+@[\w-]+\.
+            | \{\{?\s*[\w.-]+\s*\}\}? | \$\{\s*[\w.-]+\s*\}
+            | (?:the\s+)?(?:following|below|above)\s+(?:url|address|endpoint|webhook|server)
+            | (?:this|that|an?\s+(?:external|remote|third[\s-]party))\s+(?:url|address|endpoint|webhook|server)
+            | (?:any|whatever|whichever)\s+(?:url|address|endpoint|webhook|server|host|email|recipient|destination)
+          )
+        )
+      # sensitive content ... send it to <destination>: "reveal your system prompt and send it to ..."
+      - |-
+        (?x:
+          (?:
+              \b(?:system|developer|hidden|initial|original)\s+(?:prompts?|instructions)\b
+            | \byour\s+(?:prompt|instructions)\b
+            | \b(?:conversation|chat|message)\s+(?:history|logs?|transcripts?)\b
+            | \b(?:credentials|passwords|secrets|cookies)\b
+            | \b(?:api|secret|private|access|ssh)[\s_-]?keys\b
+            | \b(?:access|auth|api|session|refresh|oauth)[\s_-]?tokens\b
+            | \benv(?:ironment)?\s+var(?:iable)?s\b
+            | ~/\.ssh\b | \bid_(?:rsa|ed25519|ecdsa|dsa)\b | (?<![\w.])\.env\b | \.aws/credentials
+          )
+          (?:(?![.!?](?:\s|$))[^\n]){0,60}?
+          \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|leak|submit)\s+(?:it|them|this|these|those)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,40}?
+          \b(?:to|at|into)\s+(?:[a-z][\w+.-]*://|[\w.+-]+@[\w-]+\.|\{\{?\s*[\w.-]+\s*\}\}?|\$\{\s*[\w.-]+\s*\})
+        )
+
+  - id: D2-EXFIL-OPEN-DESTINATION
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: Tells the model to send data to a destination it or the content picks
+    remediation: >-
+      Send results only to a destination fixed in the server's configuration and visible to
+      the user. A destination taken from processed content, a template variable or the
+      model's own choice lets injected text redirect the data.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - |-
+        (?x:
+          \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|leak|submit)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,60}?
+          \b(?:to|at|into)\s+
+          (?:
+              # template variables: {recipient}, {{url}}, ${endpoint}
+              \{\{?\s*[\w.-]+\s*\}\}? | \$\{\s*[\w.-]+\s*\}
+              # chosen by the model: "any URL you choose", "an address of your choice"
+            | (?:any|whatever|whichever|an?|the)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)s?
+              \s+(?:that\s+|which\s+)?(?:you|the\s+(?:model|assistant|agent))\s+
+              (?:choose|chooses|pick|picks|prefer|prefers|decide|decides|see\s+fit|sees\s+fit|find|finds|want|wants|like|likes)\b
+            | (?:any|whatever|an?)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)
+              \s+of\s+your\s+(?:choice|choosing)\b
+              # taken from content: "the URL given in the tool output", "the address in the message"
+            | (?:the|any|whatever)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)s?
+              \s+(?:(?:that|which)\s+(?:is|are|was|were)\s+)?
+              (?:(?:given|provided|specified|supplied|found|listed|mentioned|contained|included|named|returned|received|embedded)\s+)?
+              (?:in|by|within|from|inside)\s+(?:the\s+|a\s+|this\s+|that\s+|any\s+|each\s+)?(?:user'?s\s+)?
+              (?:user|input|message|response|reply|result|output|tool\s+(?:output|result|response)|document|page|resource|argument|parameter|email|content|text|request|conversation)s?\b
+          )
+        )
 
   - id: D2-MARKDOWN-EXFIL
     module: D2
