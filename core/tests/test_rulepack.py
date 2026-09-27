@@ -49,7 +49,7 @@ def rules_file(*rules: str) -> str:
 
 def test_bundled_pack_loads() -> None:
     pack = load_rulepack()
-    assert pack.version == "2026.09.4"
+    assert pack.version == "2026.09.5"
     assert len({rule.id for rule in pack.rules}) == len(pack.rules)
 
 
@@ -97,6 +97,22 @@ def test_invalid_surfaces_are_rejected(tmp_path: Path, surfaces: str) -> None:
         tmp_path,
         rule_yaml("D1-X", "keywords", ["x"], surfaces=surfaces),
         r"rule 'D1-X': surfaces",
+    )
+
+
+def test_min_entropy_is_optional_and_positive(tmp_path: Path) -> None:
+    plain = rule_yaml("D4-A", "regex", ["a"], module="D4")
+    strict = rule_yaml("D4-B", "regex", ["b"], module="D4", min_entropy="3.5")
+    pack = load_rulepack(write_pack(tmp_path, {"d4.yaml": rules_file(plain, strict)}))
+    assert [rule.min_entropy for rule in pack.rules] == [None, 3.5]
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "high"])
+def test_invalid_min_entropy_is_rejected(tmp_path: Path, value: str) -> None:
+    assert_rule_error(
+        tmp_path,
+        rule_yaml("D4-X", "regex", ["x"], module="D4", min_entropy=value),
+        r"rule 'D4-X': min_entropy",
     )
 
 

@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from pathlib import Path
 
 from zirah.analyzers.base import ScanContext
 from zirah.analyzers.common import (
     CONTEXT_CHARS,
     RuleAnalyzer,
+    Span,
     TextField,
     context_snippet,
     iter_text,
     json_pointer,
+    redact,
+    redact_secrets,
 )
 from zirah.models import (
     Finding,
@@ -152,6 +156,36 @@ def test_context_snippet_trims_long_text_with_ellipses() -> None:
     assert snippet == "…" + "a" * CONTEXT_CHARS + "HIT" + "b" * CONTEXT_CHARS + "…"
 
 
+def test_context_snippet_widens_to_keep_overlapping_spans_whole() -> None:
+    text = "HIT" + " " * 58 + "SECRETVALUE" + " tail" * 40
+    secret = (61, 72)
+    snippet = context_snippet(text, 0, 3, keep_whole=[secret, (150, 160)])
+    # The window (0..63) cut the secret, so it grows to the secret's end; the far span is
+    # ignored.
+    assert snippet == text[:72] + "…"
+
+
+def test_redact_secrets_masks_only_the_secret_group(tmp_path: Path) -> None:
+    pack = write_pack(
+        tmp_path,
+        """\
+rules:
+  - id: D1-KEY
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP01]
+    title: Key
+    remediation: Remove it.
+    kind: regex
+    patterns: ['key=(?P<secret>\\w+)', 'pw:(?P<secret_2>\\s*\\w+)', 'TOKEN\\d+']
+""",
+    )
+    text = "key=abcdefghijkl pw: hunter2hunter2 TOKEN12345678"
+    # At most a quarter of each secret survives; text around a secret group stays as is.
+    assert redact_secrets(text, pack.rules) == "key=abc**** pw: hun**** TOK****"
+
+
 # --- RuleAnalyzer --------------------------------------------------------------------------
 
 
@@ -228,10 +262,14 @@ def test_rule_analyzer_hooks_can_filter_and_reshape(tmp_path: Path) -> None:
         ) -> bool:
             return match.start() > 3
 
-        def snippet(self, rule: Rule, match: re.Match[str]) -> str:
+        def snippet(self, rule: Rule, match: re.Match[str], secrets: Sequence[Span]) -> str:
             return f"<{match.group(0)}>"
 
     ctx = ScanContext(target=TARGET, rules=write_pack(tmp_path, RULES))
     manifest = Manifest(instructions="bad, then bad again")
     findings = Picky().run(manifest, ctx)
     assert [f.evidence.snippet for f in findings] == ["<bad>"]
+
+
+def test_redacting_twice_changes_nothing() -> None:
+    assert redact(redact("abcdefghijklmnop")) == "abcd****"

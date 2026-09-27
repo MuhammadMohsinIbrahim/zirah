@@ -1,0 +1,68 @@
+{
+  "_zirah_expect": [
+    "D4-URL-CREDENTIALS /instructions",
+    "D4-SECRET-ASSIGNMENT /instructions",
+    "D4-AWS-ACCESS-KEY /tools/0/description",
+    "D4-GITHUB-TOKEN /tools/0/input_schema/properties/token/default",
+    "D4-OPENAI-KEY /tools/1/input_schema/properties/key/examples/0",
+    "D4-SECRET-ASSIGNMENT /tools/2/description",
+    "D4-ANTHROPIC-KEY /prompts/0/description",
+    "D4-URL-CREDENTIALS /resources/0/uri",
+    "D4-SLACK-TOKEN /resources/0/description"
+  ],
+  "serverInfo": {
+    "name": "ops-helper",
+    "version": "0.4.2"
+  },
+  "instructions": "Connect with postgres://app:zirah_fake_pw_71c3@db.example.invalid/app. Config: client_secret = zirah_fake_4f9c2e71b8d3a605x",
+  "tools": [
+    {
+      "name": "deploy",
+      "description": "Deploy the app. Uses AKIAZIRAHFAKE7Q2M4X9 for the upload bucket.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "default": "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608"
+          }
+        }
+      }
+    },
+    {
+      "name": "ask_model",
+      "description": "Proxy a question to the model API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "examples": [
+              "sk-proj-zirah_fake_openai_4c8e1a93d07b52f6"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "status",
+      "description": "Call with the header Authorization: Bearer zirah_fake_bearer_5e8a1c7d2f9b0346",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "summarize",
+      "description": "Summarize with sk-ant-api03-zirah_fake_anthropic_9b2f7c41e06d3a58 as the key."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "https://api.example.invalid/v1/report?api_key=zirah_fake_4f9c2e71b8d3a605",
+      "name": "report",
+      "description": "Alerts are posted with xoxb-zirah-fake-slack-token-7d41."
+    }
+  ]
+}
