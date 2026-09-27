@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import sys
+from collections.abc import Callable
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
@@ -23,7 +24,7 @@ from zirah import __version__
 from zirah.loaders import LoaderError
 from zirah.models import Severity
 from zirah.report import json as json_report
-from zirah.report import terminal
+from zirah.report import sarif, terminal
 from zirah.scan import Scan, ScanError, scan
 
 EXIT_CLEAN = 0
@@ -43,6 +44,7 @@ app = typer.Typer(
 class OutputFormat(StrEnum):
     TERMINAL = "terminal"
     JSON = "json"
+    SARIF = "sarif"
 
 
 class FailOn(StrEnum):
@@ -105,13 +107,9 @@ def scan_command(
     if output is None:
         _print(outcome, output_format)
     else:
-        text = (
-            terminal.plain_text(outcome)
-            if output_format is OutputFormat.TERMINAL
-            else (json_report.render(outcome))
-        )
+        text = RENDERERS[output_format](outcome)
         try:
-            output.write_text(text, encoding="utf-8")
+            output.write_text(text, encoding="utf-8", newline="\n")
         except OSError as exc:
             stderr.print(f"error: cannot write {output}: {exc.strerror}", markup=False)
             raise typer.Exit(EXIT_ERROR) from None
@@ -137,11 +135,19 @@ def exit_code(outcome: Scan, fail_on: FailOn) -> int:
     return EXIT_FINDINGS if failing else EXIT_CLEAN
 
 
+RENDERERS: dict[OutputFormat, Callable[[Scan], str]] = {
+    OutputFormat.TERMINAL: terminal.plain_text,
+    OutputFormat.JSON: json_report.render,
+    OutputFormat.SARIF: sarif.render,
+}
+"""Each format as text; the terminal format is only used this way for ``--output``."""
+
+
 def _print(outcome: Scan, output_format: OutputFormat) -> None:
     if output_format is OutputFormat.TERMINAL:
         terminal.print_report(outcome, Console(highlight=False))
     else:
-        sys.stdout.write(json_report.render(outcome))
+        sys.stdout.write(RENDERERS[output_format](outcome))
 
 
 def _safe_stdout() -> None:
