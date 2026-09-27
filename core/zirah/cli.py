@@ -24,7 +24,7 @@ from zirah import __version__
 from zirah.loaders import LoaderError
 from zirah.models import Severity
 from zirah.report import json as json_report
-from zirah.report import sarif, terminal
+from zirah.report import markdown, sarif, terminal
 from zirah.scan import Scan, ScanError, scan
 
 EXIT_CLEAN = 0
@@ -45,6 +45,7 @@ class OutputFormat(StrEnum):
     TERMINAL = "terminal"
     JSON = "json"
     SARIF = "sarif"
+    MARKDOWN = "markdown"
 
 
 class FailOn(StrEnum):
@@ -139,6 +140,7 @@ RENDERERS: dict[OutputFormat, Callable[[Scan], str]] = {
     OutputFormat.TERMINAL: terminal.plain_text,
     OutputFormat.JSON: json_report.render,
     OutputFormat.SARIF: sarif.render,
+    OutputFormat.MARKDOWN: markdown.render,
 }
 """Each format as text; the terminal format is only used this way for ``--output``."""
 

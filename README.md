@@ -15,6 +15,7 @@ a fix. No account and no cloud required.
 zirah scan server.json                          # terminal report: grade, trust score, findings
 zirah scan server.json --format json -o out.json
 zirah scan server.json --format sarif -o zirah.sarif   # GitHub code scanning
+zirah scan server.json --format markdown -o report.md # PR comments, READMEs
 zirah scan server.json --fail-on high           # CI: fail only on high or critical findings
 ```
 

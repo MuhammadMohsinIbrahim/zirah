@@ -30,7 +30,7 @@ def test_header_comes_first_with_grade_score_and_meaning(tmp_path: Path) -> None
     assert lines[start + 1 : start + 6] == [
         "",
         " Grade F   Trust score 39/100",
-        "Critical findings. Do not use this server until they are fixed.",
+        "Severe findings. Do not use this server until they are fixed.",
         "Capped at 39 (from 60): 1 critical finding with high confidence.",
         "1 finding at 1 location: 1 critical",
     ]
