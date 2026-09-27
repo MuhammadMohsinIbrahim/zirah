@@ -25,8 +25,8 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* it round-trips through JSON and rejects two results for the same target.
 - [x] **0.1.5 Analyzer interface** `[—]`: `analyzers/base.py` with an `Analyzer` protocol (`module`, `engine`, `analyze(manifest, ctx) -> list[Finding]`) and an analyzer registry.
   *Done when:* a dummy analyzer is discovered, run and tested through the interface.
-- [ ] **0.1.6 Rule-pack loader** `[—]`: a YAML rule schema (id, module, severity, confidence, owasp, pattern type, patterns, title, remediation), a loader with validation, and a `rulepack_version` read from the pack.
-  *Done when:* a malformed rule file fails with a clear error naming the file and rule, and the version reaches `ScanResult`.
+- [x] **0.1.6 Rule-pack loader** `[—]`: a YAML rule schema (id, module, severity, confidence, owasp, pattern type, patterns, title, remediation), a loader with validation, and a `rulepack_version` read from the pack.
+  *Done when:* a malformed rule file fails with a clear error naming the file and rule, and the pack version is available to analyzers via `ScanContext.rules` (writing it into `ScanResult` is part of 0.1.14).
 - [ ] **0.1.7 Static JSON loader** `[—]`: `loaders/static.py` reads a manifest JSON file (MCP `tools/list`, `prompts/list` and `resources/list` shapes) into a `Manifest` + `Target`.
   *Done when:* fixtures from real servers load, and a bad file gives a readable error rather than a traceback.
 
@@ -46,7 +46,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
 - [ ] **0.1.13 Scoring** `[—]`: `scoring.py` holds the severity × confidence weights, the diminishing returns per rule, the grade thresholds (A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40) and a per-finding deduction breakdown.
   *Done when:* no findings gives 100/A, every deducted point is listed against a finding id, and boundary scores (90, 75, 60, 40) have tests.
 - [ ] **0.1.14 Scan pipeline** `[—]`: `scan.py` loads the target, hashes the manifest, runs the analyzers concurrently, dedupes by finding id, scores and builds the `ScanResult`. One analyzer crashing is reported and does not kill the scan.
-  *Done when:* an end-to-end test from fixture file to `ScanResult` is deterministic (same input, same JSON apart from timestamps).
+  *Done when:* an end-to-end test from fixture file to `ScanResult` is deterministic (same input, same JSON apart from timestamps), and `rulepack_version` comes from the loaded pack.
 
 ### Output & CLI
 - [ ] **0.1.15 CLI `scan` + JSON + terminal report** `[—]`: typer `zirah scan <target> [--format terminal|json] [--output FILE] [--fail-on SEVERITY]` and a rich terminal report (grade, score, findings grouped by severity, remediation). Exit codes are documented.

@@ -21,8 +21,12 @@ from zirah.models import (
     TargetKind,
     Tool,
 )
+from zirah.rulepack import RulePack
 
-CTX = ScanContext(target=Target(kind=TargetKind.STATIC, location="manifest.json"))
+CTX = ScanContext(
+    target=Target(kind=TargetKind.STATIC, location="manifest.json"),
+    rules=RulePack(version="test"),
+)
 MANIFEST = Manifest(tools=(Tool(name="echo", description="Echo the input. <IMPORTANT>"),))
 
 _counter = itertools.count()

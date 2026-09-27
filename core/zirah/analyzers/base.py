@@ -12,17 +12,19 @@ from types import ModuleType
 from typing import ClassVar
 
 from zirah.models import Engine, Finding, Manifest, Module, Target
+from zirah.rulepack import RulePack
 
 
 @dataclass(frozen=True, slots=True)
 class ScanContext:
     """Everything an analyzer may need besides the manifest.
 
-    Grows as releases add inputs (rule packs, the LLM provider, downloaded source), so
+    Grows as releases add inputs (the LLM provider, downloaded source), so
     analyzers take it as one argument instead of a changing parameter list.
     """
 
     target: Target
+    rules: RulePack
 
 
 class AnalyzerError(Exception):

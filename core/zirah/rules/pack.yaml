@@ -1,0 +1,21 @@
+# Zirah bundled rule pack.
+#
+# `version` is recorded as `rulepack_version` in every ScanResult, so bump it on any rule
+# change (format: YYYY.MM.N).
+#
+# Rules live in the other *.yaml files in this directory, one file per module
+# (d1_tool_poisoning.yaml, d2_prompt_injection.yaml, ...). Each file holds:
+#
+#   rules:
+#     - id: D1-ZERO-WIDTH            # D<module>-UPPER-KEBAB, prefix must match `module`
+#       module: D1
+#       severity: high               # info | low | medium | high | critical
+#       confidence: high             # low | medium | high
+#       owasp: [MCP03]               # one or more of MCP01..MCP10
+#       title: Invisible zero-width characters
+#       remediation: Remove the invisible characters from the text.
+#       kind: codepoints             # regex | keywords | codepoints
+#       patterns: ["U+200B-U+200D", "U+2060"]
+#       ignore_case: true            # optional, default true (not used by codepoints)
+#       references: []               # optional URLs
+version: "2026.09.0"
