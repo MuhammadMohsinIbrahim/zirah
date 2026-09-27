@@ -37,7 +37,7 @@ GRADE_MEANING: dict[Grade, str] = {
     Grade.B: "Minor findings. Review them before use.",
     Grade.C: "Notable findings. Fix or accept them before use.",
     Grade.D: "Serious findings. Avoid this server until they are fixed.",
-    Grade.F: "Critical findings. Do not use this server until they are fixed.",
+    Grade.F: "Severe findings. Do not use this server until they are fixed.",
 }
 
 _HIDDEN_CATEGORIES = {"Cc", "Cf", "Co", "Cs", "Cn", "Zl", "Zp"}

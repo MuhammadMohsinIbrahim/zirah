@@ -53,7 +53,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* `uv run zirah scan examples/...json` prints the report and `--fail-on high` exits non-zero on the malicious fixture.
 - [x] **0.1.16 SARIF report** `[—]`: SARIF 2.1.0 with rules, results, OWASP tags, severity mapping and stable fingerprints (finding id).
   *Done when:* the output validates against the official SARIF schema in tests.
-- [ ] **0.1.17 Markdown report** `[—]`: a markdown summary suitable for PR comments and READMEs.
+- [x] **0.1.17 Markdown report** `[—]`: a markdown summary suitable for PR comments and READMEs.
   *Done when:* snapshot tests pass and invisible characters in snippets are rendered visibly escaped (`​`).
 
 ### LLM judge (optional)
