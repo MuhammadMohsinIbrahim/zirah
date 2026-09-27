@@ -1,0 +1,54 @@
+# Workspace root. Not a package itself: it pins the members and holds shared tool config.
+[project]
+name = "zirah-workspace"
+version = "0"
+requires-python = ">=3.12"
+dependencies = ["zirah"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["core"]
+
+[tool.uv.sources]
+zirah = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "S", "PT", "N", "DTZ"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["zirah"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["core/zirah", "core/tests"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["core/tests"]
+addopts = "-ra --strict-markers --cov=zirah --cov-report=term-missing"
+
+[tool.coverage.report]
+fail_under = 60
