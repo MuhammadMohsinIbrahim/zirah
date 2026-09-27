@@ -246,7 +246,7 @@ class Finding(_Model):
     findings and lets attestations be reproduced.
     """
 
-    id: NonEmptyStr
+    id: NonEmptyStr = Field(default="", validate_default=True)
     module: Module
     rule_id: NonEmptyStr
     severity: Severity

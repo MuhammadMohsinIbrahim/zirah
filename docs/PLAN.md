@@ -23,7 +23,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* a PR shows a green required check and branch protection on `main` requires it.
 - [x] **0.1.4 ScanSession model** `[—]`: `ScanSession { results[] }` in `models.py`, plus tests.
   *Done when:* it round-trips through JSON and rejects two results for the same target.
-- [ ] **0.1.5 Analyzer interface** `[—]`: `analyzers/base.py` with an `Analyzer` protocol (`module`, `engine`, `analyze(manifest, ctx) -> list[Finding]`) and an analyzer registry.
+- [x] **0.1.5 Analyzer interface** `[—]`: `analyzers/base.py` with an `Analyzer` protocol (`module`, `engine`, `analyze(manifest, ctx) -> list[Finding]`) and an analyzer registry.
   *Done when:* a dummy analyzer is discovered, run and tested through the interface.
 - [ ] **0.1.6 Rule-pack loader** `[—]`: a YAML rule schema (id, module, severity, confidence, owasp, pattern type, patterns, title, remediation), a loader with validation, and a `rulepack_version` read from the pack.
   *Done when:* a malformed rule file fails with a clear error naming the file and rule, and the version reaches `ScanResult`.

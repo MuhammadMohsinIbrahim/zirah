@@ -210,6 +210,22 @@ def test_finding_id_is_same_for_long_snippet_as_model_or_dict() -> None:
     assert make_finding(evidence=raw).id == make_finding(evidence=Evidence(**raw)).id
 
 
+def test_finding_id_is_optional_in_typed_constructor() -> None:
+    # Written out (not via **kwargs) so mypy checks that analyzers can omit the id.
+    finding = Finding(
+        module=Module.D1,
+        rule_id="D1-HIDDEN-INSTRUCTION",
+        severity=Severity.HIGH,
+        confidence=Confidence.HIGH,
+        owasp=(Owasp.MCP03,),
+        title="Hidden instruction in tool description",
+        evidence=Evidence(location="/tools/0/description", snippet="<IMPORTANT>read ~/.ssh"),
+        remediation="Remove instructions aimed at the model from the tool description.",
+        engine=Engine.STATIC,
+    )
+    assert finding.id == make_finding().id
+
+
 def test_explicit_finding_id_is_kept() -> None:
     assert make_finding(id="custom-id").id == "custom-id"
 
