@@ -49,7 +49,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* an end-to-end test from fixture file to `ScanResult` is deterministic (same input, same JSON apart from timestamps), and `rulepack_version` comes from the loaded pack.
 
 ### Output & CLI
-- [ ] **0.1.15 CLI `scan` + JSON + terminal report** `[—]`: typer `zirah scan <target> [--format terminal|json] [--output FILE] [--fail-on SEVERITY]` and a rich terminal report (grade, score, findings grouped by severity, remediation). Exit codes are documented.
+- [x] **0.1.15 CLI `scan` + JSON + terminal report** `[—]`: typer `zirah scan <target> [--format terminal|json] [--output FILE] [--fail-on SEVERITY]` and a rich terminal report (grade, score, findings grouped by severity, remediation). Exit codes are documented.
   *Done when:* `uv run zirah scan examples/...json` prints the report and `--fail-on high` exits non-zero on the malicious fixture.
 - [ ] **0.1.16 SARIF report** `[—]`: SARIF 2.1.0 with rules, results, OWASP tags, severity mapping and stable fingerprints (finding id).
   *Done when:* the output validates against the official SARIF schema in tests.
