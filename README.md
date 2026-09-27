@@ -9,6 +9,24 @@ a fix. No account and no cloud required.
 
 **Status:** pre-alpha, working towards v0.1. Not ready for use yet.
 
+## Usage
+
+```bash
+zirah scan server.json                          # terminal report: grade, trust score, findings
+zirah scan server.json --format json -o out.json
+zirah scan server.json --fail-on high           # CI: fail only on high or critical findings
+```
+
+`server.json` is an MCP manifest: the output of `tools/list`, `prompts/list` and
+`resources/list` (optionally with `serverInfo` and `instructions`), a JSON-RPC response, or a
+list of those.
+
+| Exit code | Meaning |
+|---|---|
+| 0 | No findings at or above `--fail-on` (default `info`: any finding; `none` never fails) |
+| 1 | At least one finding at or above `--fail-on` |
+| 2 | Usage error, target not loadable, report not writable, or an analyzer failed |
+
 ## Development
 
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
