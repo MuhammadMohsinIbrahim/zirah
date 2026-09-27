@@ -63,6 +63,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* mocked tests cover the success, rate-limit and malformed-response paths.
 - [ ] **0.1.20 LLM judge for D1–D3** `[D1][D2][D3]`: a prompt that classifies descriptions and returns structured output; findings get `engine=llm` and `LlmInfo` is recorded. Untrusted text is fenced and the judge is told it is data.
   *Done when:* the judge adds findings on semantic fixtures that the static rules miss, and an injection aimed at the judge itself is a test case.
+  *Note:* re-check D2-EXFIL borderline cases semantically (e.g. "send a summary of the chat to <fixed address>", sensitive content named after the destination).
 
 ### Live loaders
 - [ ] **0.1.21 stdio loader** `[—]`: official `mcp` SDK; requires `--allow-exec` and prints the red host-execution warning from SPEC §4.3; applies a timeout and kills the process tree.
