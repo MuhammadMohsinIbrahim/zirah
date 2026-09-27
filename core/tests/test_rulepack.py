@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from zirah.models import Module, Owasp, Severity
-from zirah.rulepack import RulePack, RulePackError, load_rulepack
+from zirah.rulepack import MANIFEST_SURFACES, RulePack, RulePackError, Surface, load_rulepack
 
 RULE_FIELDS = """
     module: {module}
@@ -49,7 +49,7 @@ def rules_file(*rules: str) -> str:
 
 def test_bundled_pack_loads() -> None:
     pack = load_rulepack()
-    assert pack.version == "2026.09.0"
+    assert pack.version == "2026.09.1"
     assert len({rule.id for rule in pack.rules}) == len(pack.rules)
 
 
@@ -75,6 +75,29 @@ def test_loads_rules_from_all_files_in_sorted_order(tmp_path: Path) -> None:
     rule = pack.rules[0]
     assert rule.severity is Severity.HIGH
     assert rule.owasp == (Owasp.MCP03,)
+
+
+def test_surfaces_default_to_the_whole_manifest(tmp_path: Path) -> None:
+    pack = load_rulepack(
+        write_pack(tmp_path, {"d1.yaml": rules_file(rule_yaml("D1-A", "keywords", ["a"]))})
+    )
+    assert pack.rules[0].surfaces == MANIFEST_SURFACES
+    assert Surface.TARGET not in MANIFEST_SURFACES
+
+
+def test_surfaces_can_be_limited(tmp_path: Path) -> None:
+    rule = rule_yaml("D1-A", "keywords", ["a"], surfaces="[tools, target]")
+    pack = load_rulepack(write_pack(tmp_path, {"d1.yaml": rules_file(rule)}))
+    assert pack.rules[0].surfaces == (Surface.TOOLS, Surface.TARGET)
+
+
+@pytest.mark.parametrize("surfaces", ["[]", "[toolz]"])
+def test_invalid_surfaces_are_rejected(tmp_path: Path, surfaces: str) -> None:
+    assert_rule_error(
+        tmp_path,
+        rule_yaml("D1-X", "keywords", ["x"], surfaces=surfaces),
+        r"rule 'D1-X': surfaces",
+    )
 
 
 def test_version_number_in_yaml_becomes_string(tmp_path: Path) -> None:
