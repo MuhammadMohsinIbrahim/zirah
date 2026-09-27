@@ -43,8 +43,8 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* no finding, report or test output contains a full secret, and the test fixtures use obviously fake keys.
 
 ### Scoring & pipeline
-- [ ] **0.1.13 Scoring** `[—]`: `scoring.py` holds the severity × confidence weights, the diminishing returns per rule, the grade thresholds (A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40) and a per-finding deduction breakdown.
-  *Done when:* no findings gives 100/A, every deducted point is listed against a finding id, and boundary scores (90, 75, 60, 40) have tests.
+- [x] **0.1.13 Scoring** `[—]`: `scoring.py` holds the severity × confidence weights, grouping by evidence location (heaviest finding in full, the rest as a small bonus), diminishing returns across locations, hard caps (critical + high confidence → ≤ 39, high + high confidence → ≤ 74), the grade thresholds (A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40) and a per-finding deduction breakdown.
+  *Done when:* no findings gives 100/A, every deducted point is listed against a finding id, and boundary scores (90, 75, 60, 40), both caps and same-location grouping have tests.
 - [ ] **0.1.14 Scan pipeline** `[—]`: `scan.py` loads the target, hashes the manifest, runs the analyzers concurrently, dedupes by finding id, scores and builds the `ScanResult`. One analyzer crashing is reported and does not kill the scan.
   *Done when:* an end-to-end test from fixture file to `ScanResult` is deterministic (same input, same JSON apart from timestamps), and `rulepack_version` comes from the loaded pack.
 
