@@ -21,4 +21,4 @@
 #                                    # server | target. Default: everything in the manifest
 #                                    # (target args are only scanned when listed).
 #       references: []               # optional URLs
-version: "2026.09.1"
+version: "2026.09.2"

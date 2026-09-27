@@ -4,6 +4,9 @@
 # for the legitimate uses of the same characters: joiners inside Arabic-script and Indic
 # words and emoji sequences, tag characters in subdivision flags, single variation
 # selectors, and left-to-right/right-to-left marks in mixed-direction text are not flagged.
+#
+# The hidden-instruction and smuggling rules (from D1-INSTRUCTION-TAG on) look at tools
+# only; the same phrases in prompts, resources and server instructions are D2's job.
 rules:
   - id: D1-ZERO-WIDTH
     module: D1
@@ -158,3 +161,170 @@ rules:
       - '\b(?=\w*[A-Za-z])(?=\w*[\u0400-\u052f\u0531-\u0556\u0561-\u0587\u0391\u0392\u0395\u0396\u0397\u0399\u039a\u039d\u039f\u03a1\u03a4\u03a5\u03a7\u03b1\u03b9\u03ba\u03bd\u03bf\u03c1\u03c5])\w+'
     references:
       - https://unicode.org/reports/tr39/
+
+  # --- Hidden instructions (tools only) -------------------------------------------------
+
+  - id: D1-INSTRUCTION-TAG
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Instruction or role tags aimed at the model
+    remediation: >-
+      Remove the tags. A tool description should say what the tool does; tags such as
+      <IMPORTANT> or [SYSTEM] are there to make the model treat the text as orders.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '<\s*/?\s*(?:important|system|instructions?|hidden|critical|override|assistant)\s*>'
+      - '(?-i:\[/?(?:SYSTEM|INST|IMPORTANT)\])'
+      - '<\|\s*(?:im_start|im_end|system|assistant)\s*\|>'
+      - '<</?SYS>>'
+    references:
+      - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+
+  - id: D1-IGNORE-PREVIOUS
+    module: D1
+    severity: critical
+    confidence: high
+    owasp: [MCP03]
+    title: Tells the model to ignore its other instructions
+    remediation: >-
+      Remove the text. A tool has no reason to tell the model to disregard its instructions
+      or other tools.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\b(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:the\s+|your\s+)?(?:previous|prior|above|earlier|preceding|original|system|other)\s+(?:instructions?|prompts?|directions|guidelines)\b'
+
+  - id: D1-CONCEAL-FROM-USER
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Tells the model to keep something from the user
+    remediation: >-
+      Remove the text. A tool that asks the model to hide what it does from the user is
+      acting against the user.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\b(?:do\s+not|don''t|never|must\s+not)\s+(?:tell|inform|notify|alert|warn)\s+(?:the\s+)?user'
+      - '\b(?:do\s+not|don''t|never|must\s+not)\s+(?:mention|reveal|disclose)\b[^.\n]{0,40}?\bto\s+(?:the\s+)?user'
+      - '\b(?:do\s+not|don''t|never)\s+(?:mention|reveal|disclose)\s+(?:that|this|it|anything)\b'
+      - '\b(?:do\s+not|don''t|never)\s+let\s+(?:the\s+)?user\s+(?:know|see|find\s+out)'
+      - '\bwithout\s+(?:telling|informing)\s+(?:the\s+)?user'
+      - '\b(?:keep|hide)\s+(?:this|these|it|them)\s+(?:(?:secret|hidden)\s+)?from\s+(?:the\s+)?user'
+      - '\b(?:the\s+)?user\s+(?:must|should)\s+(?:not|never)\s+(?:know|see|be\s+(?:told|informed|aware))'
+      - '\b(?:secretly|covertly)\s+\w+'
+
+  - id: D1-SENSITIVE-FILE-ACCESS
+    module: D1
+    severity: critical
+    confidence: medium
+    owasp: [MCP03]
+    title: Asks the model to read or send credential files
+    remediation: >-
+      Remove the request. Tool descriptions must not ask the model to open or pass on SSH
+      keys, cloud credentials, client configs or other secrets.
+    kind: regex
+    surfaces: [tools]
+    # Secret stores: any access verb before the path. Config files that legitimately get
+    # read (.env, MCP client configs) only count when their content is to be passed on.
+    patterns:
+      - '\b(?:read|open|cat|load|send|upload|include|attach|pass|provide|copy|forward|fetch|access|get|extract|collect|grab|print|dump)\b[^\n]{0,60}?(?:~/\.ssh\b(?!/(?:config|known_hosts)\b)|\.ssh/id_\w+\b(?!\.pub)|\bid_(?:rsa|ed25519|ecdsa|dsa)\b(?!\.pub)|\.aws/credentials|/etc/(?:passwd|shadow)|\.netrc\b|\.git-credentials|\.(?:bash|zsh)_history)'
+      - '(?:\.env\b|mcp\.json|claude_desktop_config\.json)[^\n]{0,80}?\b(?:pass|send|include|attach|append|forward|upload)\b'
+      - '\b(?:send|upload|include|attach|append|forward|pass)\b[^\n]{0,60}?(?:\.env\b|mcp\.json|claude_desktop_config\.json)'
+
+  - id: D1-DATA-EXFIL-REQUEST
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Asks the model to pass on the conversation or credentials
+    remediation: >-
+      Remove the request. A tool should take the arguments it needs, not the conversation,
+      the system prompt or the user's credentials.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\b(?:pass|send|include|append|add|attach|forward|upload|copy|put|embed|provide)\b[^.\n]{0,50}?\b(?:(?:entire|full|whole|complete)\s+(?:conversation|chat)|(?:conversation|chat)\s+(?:history|transcript|log)|(?:the\s+)?(?:conversation|chat)\s+so\s+far|your\s+system\s+prompt|(?:the\s+)?user''?s\s+(?:api\s+keys?|passwords?|credentials|tokens?|secrets?|private\s+keys?)|all\s+(?:api\s+keys|access\s+tokens|secrets|credentials|passwords))\b'
+
+  - id: D1-COVERT-FORWARD
+    module: D1
+    severity: critical
+    confidence: medium
+    owasp: [MCP03]
+    title: Quietly copies messages to a fixed address
+    remediation: >-
+      Remove the instruction. Recipients should come from the user's request, not from a
+      standing order in the tool description.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '\b(?:always|also|silently|secretly|quietly|automatically)\s+(?:bcc|cc|forward|copy|send(?:\s+a\s+copy)?)\b[^\n]{0,80}?[\w.+-]+@[\w-]+(?:\.[\w-]+)+'
+      - '\bbcc\s*:\s*[\w.+-]+@[\w-]+(?:\.[\w-]+)+'
+    references:
+      - https://www.koi.ai/blog/postmark-mcp-npm-malicious-backdoor-email-theft
+
+  # --- Smuggling through markup (tools only) --------------------------------------------
+
+  - id: D1-HIDDEN-COMMENT
+    module: D1
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: HTML or markdown comment in a tool description
+    remediation: >-
+      Remove the comment. Comments are not rendered for the user but the model reads them.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '<!--[\s\S]*?(?:-->|$)'
+      - '(?m:^[ \t]*\[(?://|comment|#)?\]:\s*(?:#|<>))'
+
+  - id: D1-HIDDEN-HTML
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: HTML that hides text from the reader
+    remediation: >-
+      Remove the hidden element. Text styled to be invisible is only there for the model.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '<[a-z][^>]*\bstyle\s*=\s*["''][^"'']*(?:display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0|opacity\s*:\s*0(?:\.0+)?\s*(?:;|["''])|color\s*:\s*(?:white|transparent|#fff(?:fff)?)\b)'
+      - '<[a-z][a-z0-9]*\b[^>]*\shidden\b[^>]*>'
+
+  - id: D1-ACTIVE-HTML
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Script or embedded-object HTML in a tool description
+    remediation: >-
+      Remove the markup. Scripts, frames, embedded objects and event handlers have no place
+      in text that clients may render.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '<\s*(?:script|iframe)\b'
+      - '<\s*(?:object|embed)\s+[a-z]'   # real embeds carry attributes; <object> alone is a placeholder
+      - '\bjavascript\s*:'
+      - '<[a-z][^>]*\son(?:load|error|click|mouseover|focus)\s*='
+
+  - id: D1-REMOTE-IMAGE
+    module: D1
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: Remote image in a tool description (possible data beacon)
+    remediation: >-
+      Remove the image. When a client renders it, the request can leak data placed in the
+      URL, and it tells the attacker the description was shown.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      - '!\[[^\]]*\]\(\s*<?(?:https?:)?//'
+      - '<img\b[^>]*\bsrc\s*=\s*["'']?(?:https?:)?//'

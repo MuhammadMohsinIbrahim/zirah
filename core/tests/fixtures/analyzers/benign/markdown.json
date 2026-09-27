@@ -1,0 +1,52 @@
+{
+  "serverInfo": {
+    "name": "workspace-files",
+    "version": "3.2.0"
+  },
+  "instructions": "## Workspace files\n\nRead and write files in the **current workspace** only.",
+  "tools": [
+    {
+      "name": "write_file",
+      "description": "## Write a file\n\nCreates or **overwrites** a file.\n\n- `path`: where to write (relative to the workspace)\n- `content`: UTF-8 text\n\n> **Important:** existing files are replaced without a backup.\n\nIMPORTANT: paths outside the workspace are rejected.\n\n| Mode | Effect |\n|------|--------|\n| `w` | overwrite |\n| `a` | append |\n\nSee the [docs](https://example.invalid/docs/write) for details.\n\n```json\n{\"path\": \"notes/todo.md\", \"content\": \"- [ ] ship it\"}\n```",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path of the file, e.g. `docs/readme.md`."
+          },
+          "content": {
+            "type": "string",
+            "description": "Text to write. *Markdown* is fine."
+          }
+        }
+      }
+    },
+    {
+      "name": "render_html",
+      "description": "Render HTML to PDF. Accepts markup like `<p>`, `<h1>` and `<table>`; inline tags such as <b>bold</b>, <em>emphasis</em> and <kbd>Ctrl</kbd>+<kbd>K</kbd> are kept.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "html": {
+            "type": "string",
+            "description": "The HTML document."
+          }
+        }
+      }
+    },
+    {
+      "name": "search_issues",
+      "description": "Search issues with GitHub syntax, e.g. `is:open label:bug`.\n\n1. Results are sorted by date.\n2. ~~Pagination~~ is automatic.\n\nReference: [search syntax][syntax].\n\n[syntax]: https://example.invalid/search",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query."
+          }
+        }
+      }
+    }
+  ]
+}
