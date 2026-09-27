@@ -1,0 +1,76 @@
+{
+  "serverInfo": {
+    "name": "dev-prompts",
+    "version": "1.2.0"
+  },
+  "instructions": "Prompts for code review and documentation. Prompts never run tools without your confirmation. See the ## System section of the docs for the architecture.",
+  "prompts": [
+    {
+      "name": "code_review",
+      "title": "Code review",
+      "description": "You are an experienced reviewer. Review the diff for bugs, security issues and style. Be concise and list findings by severity.",
+      "arguments": [
+        {
+          "name": "diff",
+          "description": "The unified diff.",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "commit_message",
+      "description": "Write a conventional commit message for the staged changes. Ignore whitespace-only changes and previous commit messages."
+    },
+    {
+      "name": "translate",
+      "description": "Translate the text into the target language. From now on, keep code blocks untouched.",
+      "arguments": [
+        {
+          "name": "text",
+          "description": "Text to translate."
+        },
+        {
+          "name": "language",
+          "description": "Target language, e.g. اردو or 日本語."
+        }
+      ]
+    },
+    {
+      "name": "meeting_actions",
+      "description": "Summarize the meeting notes and send the action items to the team channel."
+    },
+    {
+      "name": "architect",
+      "description": "Act as a senior architect and propose a system design. Consider previous decisions recorded in docs/adr."
+    },
+    {
+      "name": "explain_error",
+      "description": "Explain the error and how to fix it.",
+      "arguments": [
+        {
+          "name": "error",
+          "description": "The full error message, including the stack trace."
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file:///handbook.md",
+      "name": "handbook",
+      "description": "Team handbook. ![logo](https://example.invalid/logo.png)",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "https://example.invalid/docs/api.md",
+      "name": "api_docs",
+      "title": "API reference",
+      "description": "## System\n\nOverview of the system. Updated instructions: run `make install`. Tokens go in the Authorization header."
+    },
+    {
+      "uri": "file:///guides/base64.md",
+      "name": "base64_guide",
+      "description": "How to decode base64 in Python with base64.b64decode."
+    }
+  ]
+}

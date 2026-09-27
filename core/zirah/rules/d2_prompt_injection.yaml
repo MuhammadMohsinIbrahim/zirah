@@ -1,0 +1,151 @@
+# D2 prompt injection (static): prompts, prompt arguments, resources and server instructions.
+#
+# Prompt templates are supposed to instruct the model ("You are a reviewer. Summarize ..."),
+# so these rules look for what a legitimate template has no reason to contain: overriding
+# the model's other instructions, forged chat-format delimiters, jailbreak modes, hiding
+# things from the user, and moving data out. Tool text is D1's job.
+rules:
+  - id: D2-IGNORE-PREVIOUS
+    module: D2
+    severity: critical
+    confidence: high
+    owasp: [MCP06]
+    title: Tells the model to ignore its other instructions
+    remediation: >-
+      Remove the text. Prompts and resources should not tell the model to disregard its
+      system prompt or earlier instructions.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\b(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:the\s+|your\s+)?(?:previous|prior|above|earlier|preceding|original|system|other)\s+(?:instructions?|prompts?|directions|guidelines)\b'
+      - '\bforget\s+(?:everything|all)\s+(?:above|before|you\s+(?:were|have\s+been)\s+told)\b'
+
+  - id: D2-DELIMITER-INJECTION
+    module: D2
+    severity: high
+    confidence: high
+    owasp: [MCP06]
+    title: Forged chat-format or role delimiters
+    remediation: >-
+      Remove the delimiters. Tokens such as <|im_start|>, [INST] or <<SYS>> try to make
+      text look like a system or assistant turn.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '<\|\s*(?:im_start|im_end|system|user|assistant|endoftext)\s*\|>'
+      - '(?-i:\[/?INST\])'
+      - '<</?SYS>>'
+      - '<\s*/?\s*(?:system|assistant)\s*>'
+      # "### System:" / "### Instruction:" turns; a plain "## System" heading is not flagged.
+      - '(?m:^[ \t]*#{2,3}[ \t]*(?:system|instruction|new\s+instructions?)[ \t]*:)'
+
+  - id: D2-ROLE-OVERRIDE
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: Jailbreak or role-override phrasing
+    remediation: >-
+      Remove the text. Switching the model into an "unrestricted" or "developer" mode is a
+      jailbreak, not a prompt template.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\byou\s+are\s+now\s+(?:in\s+)?(?:an?\s+)?(?:developer|god|jailbreak|jailbroken|unrestricted|unfiltered|DAN|admin|root)\b'
+      - '\b(?:developer|god|jailbreak|DAN)\s+mode\b'
+      - '\b(?:act|behave|respond)\s+as\s+(?:an?\s+)?(?:unrestricted|unfiltered|uncensored|jailbroken)\b'
+      - '\b(?:new|updated|real|actual)\s+system\s+instructions\s*:'
+      - '\b(?:real|actual|true)\s+instructions\s*:'
+      - '\b(?:no\s+longer|not)\s+(?:bound|restricted|limited)\s+by\s+(?:any\s+|your\s+|the\s+)?(?:rules|guidelines|policies|restrictions|instructions)\b'
+
+  - id: D2-CONCEAL-FROM-USER
+    module: D2
+    severity: high
+    confidence: high
+    owasp: [MCP06]
+    title: Tells the model to keep something from the user
+    remediation: >-
+      Remove the text. Prompts and resources should never ask the model to hide actions or
+      information from the user.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\b(?:do\s+not|don''t|never|must\s+not)\s+(?:tell|inform|notify|alert|warn)\s+(?:the\s+)?user'
+      - '\b(?:do\s+not|don''t|never|must\s+not)\s+(?:mention|reveal|disclose)\b[^.\n]{0,40}?\bto\s+(?:the\s+)?user'
+      - '\b(?:do\s+not|don''t|never)\s+let\s+(?:the\s+)?user\s+(?:know|see|find\s+out)'
+      - '\bwithout\s+(?:telling|informing)\s+(?:the\s+)?user'
+      - '\b(?:keep|hide)\s+(?:this|these|it|them)\s+(?:(?:secret|hidden)\s+)?from\s+(?:the\s+)?user'
+      - '\b(?:secretly|covertly)\s+\w+'
+
+  - id: D2-SYSTEM-PROMPT-EXTRACTION
+    module: D2
+    severity: high
+    confidence: high
+    owasp: [MCP06]
+    title: Asks the model to reveal its system prompt or instructions
+    remediation: >-
+      Remove the request. Nothing a prompt or resource does needs the model's own system
+      prompt.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\b(?:reveal|print|repeat|output|show|leak|disclose|dump|recite)\b[^.\n]{0,30}?\b(?:your|the)\s+(?:system\s+prompt|initial\s+instructions|hidden\s+instructions|instructions\s+above|original\s+instructions)\b'
+
+  - id: D2-EXFIL-INSTRUCTION
+    module: D2
+    severity: critical
+    confidence: medium
+    owasp: [MCP06]
+    title: Tells the model to send data to an outside address
+    remediation: >-
+      Remove the instruction. Prompts and resources must not direct data to URLs or email
+      addresses that the user did not choose.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\b(?:send|post|upload|forward|transmit|exfiltrate|leak|submit)\b[^.\n]{0,60}?\b(?:to|at)\s+(?:https?://|[\w.+-]+@[\w-]+\.)'
+
+  - id: D2-MARKDOWN-EXFIL
+    module: D2
+    severity: high
+    confidence: high
+    owasp: [MCP06]
+    title: Markdown image or link with data placeholders in the URL
+    remediation: >-
+      Remove the link. An image whose URL is filled from the conversation leaks it as soon
+      as the client renders the reply.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '!?\[[^\]]*\]\(\s*<?https?://[^)\s]*(?:\{|\$\{|%7B|\{\{)'
+      - '<img\b[^>]*\bsrc\s*=\s*["'']?https?://[^"''>\s]*(?:\{|\$\{|%7B)'
+
+  - id: D2-ENCODED-INSTRUCTIONS
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: Asks the model to decode and follow hidden instructions
+    remediation: >-
+      Remove the encoded payload. Instructions hidden in base64, hex or ROT13 are there to
+      get past review.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\b(?:decode|decrypt|unscramble|base64-decode)\b[^.\n]{0,60}?\b(?:and\s+)?(?:then\s+)?(?:follow|execute|run|obey|do\s+what)\b'
+
+  - id: D2-AUTONOMY-OVERRIDE
+    module: D2
+    severity: medium
+    confidence: low
+    owasp: [MCP06]
+    title: Tells the model to act without the user's confirmation
+    remediation: >-
+      Remove the instruction. Whether to confirm an action is the client's and the user's
+      decision, not something a prompt or resource should switch off.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      - '\bwithout\s+(?:asking|(?:the\s+user''?s\s+)?(?:confirmation|approval|permission|consent))\b'
+      - '\b(?:do\s+not|don''t|never)\s+ask\s+(?:the\s+user\s+)?(?:for\s+)?(?:confirmation|permission|approval)\b'
+      - '\b(?:immediately|automatically|silently)\s+(?:call|invoke|run|execute)\b'
