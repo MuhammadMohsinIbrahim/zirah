@@ -1,0 +1,165 @@
+"""Shared machinery for analyzers driven by YAML rules.
+
+:func:`iter_text` flattens a manifest (and the target, for secrets) into strings, each with a
+JSON Pointer to where it came from. :class:`RuleAnalyzer` runs a module's rules over those
+strings and turns matches into findings, so a module's analyzer holds only what is special
+about that module.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Iterator, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+from zirah.analyzers.base import Analyzer, ScanContext
+from zirah.models import Engine, Evidence, Finding, Manifest, Target
+from zirah.rulepack import Rule, Surface
+
+CONTEXT_CHARS = 60
+"""Characters of surrounding text kept on each side of a match in a finding's snippet."""
+
+TARGET_PREFIX = "target:"
+"""Locations outside the manifest start with this, e.g. ``target:/args``."""
+
+
+@dataclass(frozen=True, slots=True)
+class TextField:
+    """One string from the scan target, with where it was found."""
+
+    location: str
+    """JSON Pointer into the manifest (``/tools/0/description``), or ``target:/...``."""
+    text: str
+    surface: Surface
+
+
+def json_pointer(*parts: str | int) -> str:
+    """Build a JSON Pointer (RFC 6901) from path segments."""
+    return "".join("/" + str(part).replace("~", "~0").replace("/", "~1") for part in parts)
+
+
+def iter_text(manifest: Manifest, target: Target | None = None) -> Iterator[TextField]:
+    """Every non-empty string in ``manifest``, in document order.
+
+    Schemas and annotations are walked recursively, keys included: a property name is text
+    the model reads too. A key's location is the pointer to its member. When ``target`` is
+    given, its location and its arguments (joined into one command line, so ``--token VALUE``
+    reads as one phrase) come last.
+    """
+    fields: list[tuple[tuple[str | int, ...], Any, Surface]] = [
+        (("server_name",), manifest.server_name, Surface.SERVER),
+        (("server_version",), manifest.server_version, Surface.SERVER),
+        (("instructions",), manifest.instructions, Surface.INSTRUCTIONS),
+    ]
+    for i, tool in enumerate(manifest.tools):
+        base: tuple[str | int, ...] = ("tools", i)
+        fields += [
+            ((*base, "name"), tool.name, Surface.TOOLS),
+            ((*base, "title"), tool.title, Surface.TOOLS),
+            ((*base, "description"), tool.description, Surface.TOOLS),
+            ((*base, "input_schema"), tool.input_schema, Surface.TOOLS),
+            ((*base, "output_schema"), tool.output_schema, Surface.TOOLS),
+            ((*base, "annotations"), tool.annotations, Surface.TOOLS),
+        ]
+    for i, prompt in enumerate(manifest.prompts):
+        base = ("prompts", i)
+        fields += [
+            ((*base, "name"), prompt.name, Surface.PROMPTS),
+            ((*base, "title"), prompt.title, Surface.PROMPTS),
+            ((*base, "description"), prompt.description, Surface.PROMPTS),
+        ]
+        for j, argument in enumerate(prompt.arguments):
+            fields += [
+                ((*base, "arguments", j, "name"), argument.name, Surface.PROMPTS),
+                ((*base, "arguments", j, "description"), argument.description, Surface.PROMPTS),
+            ]
+    for i, resource in enumerate(manifest.resources):
+        base = ("resources", i)
+        fields += [
+            ((*base, "uri"), resource.uri, Surface.RESOURCES),
+            ((*base, "name"), resource.name, Surface.RESOURCES),
+            ((*base, "title"), resource.title, Surface.RESOURCES),
+            ((*base, "description"), resource.description, Surface.RESOURCES),
+            ((*base, "mime_type"), resource.mime_type, Surface.RESOURCES),
+        ]
+
+    for path, value, surface in fields:
+        yield from _walk(value, path, surface)
+
+    if target is not None:
+        yield TextField(f"{TARGET_PREFIX}/location", target.location, Surface.TARGET)
+        if target.args:
+            yield TextField(f"{TARGET_PREFIX}/args", " ".join(target.args), Surface.TARGET)
+
+
+def _walk(value: Any, path: tuple[str | int, ...], surface: Surface) -> Iterator[TextField]:
+    if isinstance(value, str):
+        if value:
+            yield TextField(json_pointer(*path), value, surface)
+    elif isinstance(value, Mapping):
+        for key, item in value.items():
+            child = (*path, str(key))
+            if key:
+                yield TextField(json_pointer(*child), str(key), surface)
+            yield from _walk(item, child, surface)
+    elif isinstance(value, Sequence):
+        for index, item in enumerate(value):
+            yield from _walk(item, (*path, index), surface)
+
+
+def context_snippet(text: str, start: int, end: int) -> str:
+    """``text[start:end]`` with up to ``CONTEXT_CHARS`` of context on each side.
+
+    The text is kept verbatim, invisible characters included; reports escape it for display.
+    """
+    lo = max(0, start - CONTEXT_CHARS)
+    hi = min(len(text), end + CONTEXT_CHARS)
+    return ("…" if lo > 0 else "") + text[lo:hi] + ("…" if hi < len(text) else "")
+
+
+class RuleAnalyzer(Analyzer):
+    """An analyzer whose detections all come from its module's YAML rules.
+
+    Each rule reports at most one finding per location: the first accepted match, shown in
+    context. Subclasses implement ``analyze`` as ``return self.match_rules(manifest, ctx)``
+    and override :meth:`accept` or :meth:`snippet` for module-specific handling.
+    """
+
+    engine = Engine.STATIC
+
+    def match_rules(self, manifest: Manifest, ctx: ScanContext) -> list[Finding]:
+        rules = ctx.rules.for_module(self.module)
+        findings: list[Finding] = []
+        for field in iter_text(manifest, ctx.target):
+            for rule in rules:
+                if field.surface not in rule.surfaces:
+                    continue
+                for match in rule.finditer(field.text):
+                    if self.accept(rule, match, field, manifest):
+                        findings.append(self._finding(rule, field, self.snippet(rule, match)))
+                        break
+        return findings
+
+    def accept(
+        self, rule: Rule, match: re.Match[str], field: TextField, manifest: Manifest
+    ) -> bool:
+        """Whether ``match`` is a real detection. Every match is, unless overridden."""
+        return True
+
+    def snippet(self, rule: Rule, match: re.Match[str]) -> str:
+        """The evidence shown for ``match``: the match in context, unless overridden."""
+        return context_snippet(match.string, match.start(), match.end())
+
+    def _finding(self, rule: Rule, field: TextField, snippet: str) -> Finding:
+        return Finding(
+            module=rule.module,
+            rule_id=rule.id,
+            severity=rule.severity,
+            confidence=rule.confidence,
+            owasp=rule.owasp,
+            title=rule.title,
+            evidence=Evidence(location=field.location, snippet=snippet),
+            remediation=rule.remediation,
+            engine=self.engine,
+        )

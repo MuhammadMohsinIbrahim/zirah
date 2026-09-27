@@ -1,0 +1,160 @@
+# D1 tool poisoning (static): text the model reads but the user does not see.
+#
+# The invisible-character rules look at every string in the manifest. Each rule leaves room
+# for the legitimate uses of the same characters: joiners inside Arabic-script and Indic
+# words and emoji sequences, tag characters in subdivision flags, single variation
+# selectors, and left-to-right/right-to-left marks in mixed-direction text are not flagged.
+rules:
+  - id: D1-ZERO-WIDTH
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Invisible zero-width or filler characters
+    remediation: >-
+      Remove the invisible characters. They render as nothing but still reach the model, so
+      they can hide text or split words to slip past filters.
+    kind: codepoints
+    patterns:
+      - U+200B          # zero width space
+      - U+2060-U+2064   # word joiner, invisible math operators
+      - U+FEFF          # zero width no-break space (a byte order mark inside text)
+      - U+180E          # Mongolian vowel separator
+      - U+034F          # combining grapheme joiner
+      - U+115F-U+1160   # Hangul choseong and jungseong fillers
+      - U+3164          # Hangul filler
+      - U+FFA0          # halfwidth Hangul filler
+    references:
+      - https://unicode.org/reports/tr36/
+
+  - id: D1-JOINER-OUT-OF-CONTEXT
+    module: D1
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: Zero-width joiner outside a script or emoji that uses it
+    remediation: >-
+      Remove the zero-width joiner or non-joiner. They are only needed between letters of
+      scripts such as Arabic, Urdu, Persian or Devanagari, or inside emoji sequences.
+    kind: regex
+    # A joiner is fine when both neighbours belong to a joining script or an emoji
+    # sequence; it is flagged when either neighbour does not.
+    patterns:
+      - '(?<![\u0600-\u074f\u0750-\u077f\u07c0-\u07ff\u0870-\u08ff\u0900-\u0dff\u0e00-\u0fff\u1000-\u109f\u1780-\u18af\ua8e0-\ua8ff\ufb50-\ufdff\ufe70-\ufefc\xa9\xae\u203c-\u3299\ufe0f\U0001F000-\U0001FAFF])[\u200c\u200d]'
+      - '[\u200c\u200d](?![\u0600-\u074f\u0750-\u077f\u07c0-\u07ff\u0870-\u08ff\u0900-\u0dff\u0e00-\u0fff\u1000-\u109f\u1780-\u18af\ua8e0-\ua8ff\ufb50-\ufdff\ufe70-\ufefc\xa9\xae\u203c-\u3299\U0001F000-\U0001FAFF])'
+
+  - id: D1-BIDI-OVERRIDE
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Bidirectional override characters
+    remediation: >-
+      Remove the override characters. They reorder how text is displayed, so what the user
+      reads is not what the model receives.
+    kind: codepoints
+    patterns:
+      - U+202D-U+202E   # left-to-right and right-to-left override
+    references:
+      - https://trojansource.codes/
+
+  - id: D1-BIDI-EMBEDDING
+    module: D1
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: Bidirectional embedding or isolate characters
+    remediation: >-
+      Remove the embedding or isolate characters. Plain left-to-right and right-to-left
+      marks are enough for mixed-direction text and are not flagged.
+    kind: codepoints
+    patterns:
+      - U+202A-U+202C   # embeddings and pop directional formatting
+      - U+2066-U+2069   # isolates
+    references:
+      - https://trojansource.codes/
+
+  - id: D1-TAG-CHARACTERS
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Invisible Unicode tag characters (ASCII smuggling)
+    remediation: >-
+      Remove the tag characters. Each one invisibly encodes an ASCII character, so they can
+      carry a whole hidden instruction.
+    kind: regex
+    # Subdivision flags (e.g. England: black flag + "gbeng" in tags + cancel tag) are the
+    # one legitimate use and are skipped; a longer tag run after a black flag is not.
+    patterns:
+      - '\U0001F3F4(?![\U000E0030-\U000E0039\U000E0061-\U000E007A]{2,6}\U000E007F(?![\U000E0000-\U000E007F]))[\U000E0000-\U000E007F]+'
+      - '(?<![\U0001F3F4\U000E0000-\U000E007F])[\U000E0000-\U000E007F]+'
+    references:
+      - https://embracethered.com/blog/posts/2024/hiding-and-finding-text-with-unicode-tags/
+
+  - id: D1-VARIATION-SELECTOR-RUN
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Run of variation selectors (hidden data)
+    remediation: >-
+      Remove the variation selectors. Emoji and ideographs use one at a time; a run of them
+      can encode hidden bytes.
+    kind: regex
+    patterns:
+      - '[\ufe00-\ufe0f\U000E0100-\U000E01EF]{2,}'
+
+  - id: D1-ANSI-ESCAPE
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Terminal escape sequences or bell characters
+    remediation: >-
+      Remove the escape sequences. In a terminal they can hide, recolour or rewrite text, so
+      what a user reviews is not what the model reads.
+    kind: regex
+    ignore_case: false
+    patterns:
+      - '\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)?|[@-Z\\-_])?'
+      - '\x9b[0-?]*[ -/]*[@-~]'
+      - '\x07'   # bell, alone; one ending an OSC sequence is part of the match above
+
+  - id: D1-CONTROL-CHARACTERS
+    module: D1
+    severity: medium
+    confidence: high
+    owasp: [MCP03]
+    title: Control characters in text
+    remediation: >-
+      Remove the control characters. Tabs and line breaks are fine; other control characters
+      have no place in names or descriptions.
+    kind: codepoints
+    patterns:
+      - U+0000-U+0006   # U+0007 (bell) is covered by D1-ANSI-ESCAPE
+      - U+0008
+      - U+000B-U+000C
+      - U+000E-U+001A
+      - U+001C-U+001F   # U+001B (escape) is covered by D1-ANSI-ESCAPE
+      - U+007F-U+009A
+      - U+009C-U+009F   # U+009B (C1 CSI) is covered by D1-ANSI-ESCAPE
+
+  - id: D1-HOMOGLYPH-MIXED-SCRIPT
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: Word mixes Latin letters with look-alike letters from another script
+    remediation: >-
+      Use one script per word. A name like "rеad_file" with a Cyrillic "е" looks identical
+      to a trusted tool but is a different string.
+    kind: regex
+    ignore_case: false
+    # Whole words in Cyrillic, Greek or Armenian are fine; a single word that mixes them
+    # with Latin letters is not. Greek letters are limited to Latin look-alikes, so units
+    # such as "μs" stay clean.
+    patterns:
+      - '\b(?=\w*[A-Za-z])(?=\w*[\u0400-\u052f\u0531-\u0556\u0561-\u0587\u0391\u0392\u0395\u0396\u0397\u0399\u039a\u039d\u039f\u03a1\u03a4\u03a5\u03a7\u03b1\u03b9\u03ba\u03bd\u03bf\u03c1\u03c5])\w+'
+    references:
+      - https://unicode.org/reports/tr39/

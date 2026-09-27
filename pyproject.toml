@@ -34,7 +34,8 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "S", "PT", "N", "DTZ"]
 known-first-party = ["zirah"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S101"]
+# Tests hold look-alike letters on purpose (homoglyph and multilingual cases).
+"**/tests/**" = ["S101", "RUF001"]
 
 [tool.mypy]
 python_version = "3.12"

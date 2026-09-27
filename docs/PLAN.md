@@ -31,7 +31,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* fixtures from real servers load, and a bad file gives a readable error rather than a traceback.
 
 ### Detection (static)
-- [ ] **0.1.8 D1 invisible characters** `[D1]`: rules for zero-width, bidi override, tag characters, ANSI escapes and homoglyph-mixed names, applied to every string in descriptions, titles and `input_schema` (recursive walk).
+- [x] **0.1.8 D1 invisible characters** `[D1]`: rules for zero-width, bidi override, tag characters, ANSI escapes and homoglyph-mixed names, applied to every string in descriptions, titles and `input_schema` (recursive walk).
   *Done when:* malicious fixtures are caught with JSON-pointer locations and benign non-English descriptions (Urdu, CJK, emoji) are not flagged.
 - [ ] **0.1.9 D1 hidden instructions & smuggling** `[D1]`: rules for model-directed instructions (`<IMPORTANT>`, "ignore previous", "do not tell the user", file/secret requests), HTML comments, and markdown/HTML smuggling.
   *Done when:* the postmark-style and "read ~/.ssh" fixtures are caught and a corpus of benign descriptions stays clean.

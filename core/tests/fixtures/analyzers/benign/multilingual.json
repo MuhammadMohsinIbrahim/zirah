@@ -1,0 +1,60 @@
+{
+  "serverInfo": {
+    "name": "多语言文件工具",
+    "version": "2.1.0"
+  },
+  "instructions": "Tools for reading files. 🛡\uFE0F Works offline; responses stay local.",
+  "tools": [
+    {
+      "name": "read_file",
+      "title": "فائل پڑھیں",
+      "description": "یہ ٹول فائل\u200Cنام لے کر فائل پڑھتا ہے اور متن واپس کرتا ہے۔",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "مسیر فایل\u200Cها را وارد کنید؛ ابزار آن را می\u200Cخواند."
+          },
+          "encoding": {
+            "type": "string",
+            "description": "الترميز \u200F(UTF-8)\u200F هو الافتراضي\u061C دائمًا."
+          }
+        }
+      }
+    },
+    {
+      "name": "summarize",
+      "title": "要約する",
+      "description": "ファイルを要約します。葛\uDB40\uDD00飾区の住所も正しく扱います。中文说明：总结文件内容。한국어: 파일을 요약합니다.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "हिन्दी",
+              "क्\u200Dष",
+              "क्\u200Cष",
+              "ไทย",
+              "עברית\u200F"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "status",
+      "description": "Шлёт статус JSON и возвращает текст. Διαβάζει το αρχείο. Կարդում է ֆայլը. Timeout in μs. Team: 👨\u200D👩\u200D👧\u200D👦 🏳\uFE0F\u200D🌈 👩🏽\u200D💻 🧑\u200D🤝\u200D🧑 👁\uFE0F\u200D🗨\uFE0F 🏃\u200D♀\uFE0F ❤\uFE0F 1\uFE0F⃣ 🏴\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F 🏴\uDB40\uDC67\uDB40\uDC62\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74\uDB40\uDC7F ＡＰＩキー",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "greet",
+      "description": "Say hello: مرحبا، سلام، 你好, こんにちは, 안녕하세요, नमस्ते 👋"
+    }
+  ]
+}

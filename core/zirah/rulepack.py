@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
+from enum import StrEnum
 from importlib.resources import as_file, files
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -41,6 +42,33 @@ class RulePackError(Exception):
     """A rule pack is missing, malformed, or contains an invalid rule."""
 
 
+class Surface(StrEnum):
+    """The parts of a scan target a rule can look at."""
+
+    TOOLS = "tools"
+    """Tool names, titles, descriptions, schemas and annotations."""
+    PROMPTS = "prompts"
+    """Prompt names, titles, descriptions and arguments."""
+    RESOURCES = "resources"
+    """Resource URIs, names, titles, descriptions and MIME types."""
+    INSTRUCTIONS = "instructions"
+    """The server's ``instructions`` text."""
+    SERVER = "server"
+    """The server name and version."""
+    TARGET = "target"
+    """The target's location and arguments (not part of the manifest)."""
+
+
+MANIFEST_SURFACES: tuple[Surface, ...] = (
+    Surface.TOOLS,
+    Surface.PROMPTS,
+    Surface.RESOURCES,
+    Surface.INSTRUCTIONS,
+    Surface.SERVER,
+)
+"""What a rule looks at when it does not list ``surfaces``: everything in the manifest."""
+
+
 class Rule(BaseModel):
     """One detection rule.
 
@@ -49,6 +77,9 @@ class Rule(BaseModel):
     - ``regex``: each entry is a Python regular expression.
     - ``keywords``: each entry is a literal phrase, matched on word boundaries.
     - ``codepoints``: each entry is ``U+XXXX`` or a range ``U+XXXX-U+YYYY``.
+
+    ``surfaces`` limits where the rule looks, e.g. only tool descriptions and schemas, so a
+    phrase judged by two modules in different places is reported once.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -63,6 +94,7 @@ class Rule(BaseModel):
     kind: Literal["regex", "keywords", "codepoints"]
     patterns: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
     ignore_case: bool = True
+    surfaces: Annotated[tuple[Surface, ...], Field(min_length=1)] = MANIFEST_SURFACES
     references: tuple[str, ...] = ()
 
     _pattern: re.Pattern[str] = PrivateAttr()
