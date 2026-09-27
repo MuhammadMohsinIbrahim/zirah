@@ -39,7 +39,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* malicious and benign fixtures pass, and findings point at the exact prompt/resource.
 - [x] **0.1.11 D3 single-manifest shadowing** `[D3]`: a description references or overrides other tools ("instead of", "before using X", "always call this first"), including tool names not in this manifest.
   *Done when:* shadowing fixtures are caught, while a tool legitimately mentioning its own name or siblings in plain usage is not.
-- [ ] **0.1.12 D4 secrets** `[D4]`: key/token patterns (AWS, GitHub, OpenAI, Anthropic, Slack, private keys, JWTs, high-entropy strings) in the manifest and target args. **Snippets are redacted** (prefix + `****`).
+- [x] **0.1.12 D4 secrets** `[D4]`: key/token patterns (AWS, GitHub, OpenAI, Anthropic, Slack, private keys, JWTs, high-entropy strings) in the manifest and target args. **Snippets are redacted** (prefix + `****`).
   *Done when:* no finding, report or test output contains a full secret, and the test fixtures use obviously fake keys.
 
 ### Scoring & pipeline

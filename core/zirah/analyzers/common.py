@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from zirah.analyzers.base import Analyzer, ScanContext
-from zirah.models import Engine, Evidence, Finding, Manifest, Target
+from zirah.models import Engine, Evidence, Finding, Manifest, Module, Target
 from zirah.rulepack import Rule, Surface
 
 CONTEXT_CHARS = 60
@@ -108,14 +108,70 @@ def _walk(value: Any, path: tuple[str | int, ...], surface: Surface) -> Iterator
             yield from _walk(item, (*path, index), surface)
 
 
-def context_snippet(text: str, start: int, end: int) -> str:
+Span = tuple[int, int]
+
+
+def context_snippet(text: str, start: int, end: int, keep_whole: Sequence[Span] = ()) -> str:
     """``text[start:end]`` with up to ``CONTEXT_CHARS`` of context on each side.
 
-    The text is kept verbatim, invisible characters included; reports escape it for display.
+    The window grows to take in any span of ``keep_whole`` it overlaps, so a secret is never
+    cut in half (a half secret would no longer match, and so escape redaction). The text is
+    kept verbatim, invisible characters included; reports escape it for display.
     """
     lo = max(0, start - CONTEXT_CHARS)
     hi = min(len(text), end + CONTEXT_CHARS)
+    for span_start, span_end in keep_whole:
+        if span_start < hi and span_end > lo:
+            lo, hi = min(lo, span_start), max(hi, span_end)
     return ("…" if lo > 0 else "") + text[lo:hi] + ("…" if hi < len(text) else "")
+
+
+# --- Secrets -------------------------------------------------------------------------------
+
+REDACT_KEEP = 4
+"""Most characters of a secret shown in evidence; the rest becomes ``****``."""
+
+SECRET_GROUP = re.compile(r"secret(?:_\d+)?")
+"""Regex groups holding the secret itself in a D4 rule; text around them is shown as is."""
+
+
+def redact(value: str) -> str:
+    """A short prefix of ``value`` plus ``****``, never more than a quarter of it.
+
+    Already redacted values are returned unchanged, so redacting twice is harmless.
+    """
+    if value.endswith("****"):
+        return value
+    return value[: min(REDACT_KEEP, len(value) // 4)] + "****"
+
+
+def secret_spans(match: re.Match[str]) -> list[Span]:
+    """Where the secret is in ``match``: its secret groups, or the whole match."""
+    spans = [
+        match.span(name)
+        for name, value in match.groupdict().items()
+        if value is not None and SECRET_GROUP.fullmatch(name)
+    ]
+    return sorted(spans) or [match.span()]
+
+
+def redact_match(match: re.Match[str]) -> str:
+    """The matched text with every secret in it redacted."""
+    text, pos, parts = match.string, match.start(), []
+    for start, end in secret_spans(match):
+        value = text[start:end]
+        stripped = value.lstrip()
+        parts += [text[pos:start], value[: len(value) - len(stripped)], redact(stripped.strip())]
+        pos = end
+    parts.append(text[pos : match.end()])
+    return "".join(parts)
+
+
+def redact_secrets(text: str, rules: Sequence[Rule]) -> str:
+    """``text`` with every match of the secret ``rules`` (module D4) redacted."""
+    for rule in rules:
+        text = rule.pattern.sub(redact_match, text)
+    return text
 
 
 class RuleAnalyzer(Analyzer):
@@ -124,12 +180,16 @@ class RuleAnalyzer(Analyzer):
     Each rule reports at most one finding per location: the first accepted match, shown in
     context. Subclasses implement ``analyze`` as ``return self.match_rules(manifest, ctx)``
     and override :meth:`accept` or :meth:`snippet` for module-specific handling.
+
+    Whatever the module, secrets matched by the D4 rules are redacted in every snippet, so
+    an API key sitting next to a hidden character does not leak through a D1 finding.
     """
 
     engine = Engine.STATIC
 
     def match_rules(self, manifest: Manifest, ctx: ScanContext) -> list[Finding]:
         rules = ctx.rules.for_module(self.module)
+        secret_rules = ctx.rules.for_module(Module.D4)
         findings: list[Finding] = []
         for field in iter_text(manifest, ctx.target):
             for rule in rules:
@@ -137,7 +197,9 @@ class RuleAnalyzer(Analyzer):
                     continue
                 for match in rule.finditer(field.text):
                     if self.accept(rule, match, field, manifest):
-                        findings.append(self._finding(rule, field, self.snippet(rule, match)))
+                        secrets = [m.span() for r in secret_rules for m in r.finditer(field.text)]
+                        snippet = redact_secrets(self.snippet(rule, match, secrets), secret_rules)
+                        findings.append(self._finding(rule, field, snippet))
                         break
         return findings
 
@@ -147,9 +209,12 @@ class RuleAnalyzer(Analyzer):
         """Whether ``match`` is a real detection. Every match is, unless overridden."""
         return True
 
-    def snippet(self, rule: Rule, match: re.Match[str]) -> str:
-        """The evidence shown for ``match``: the match in context, unless overridden."""
-        return context_snippet(match.string, match.start(), match.end())
+    def snippet(self, rule: Rule, match: re.Match[str], secrets: Sequence[Span]) -> str:
+        """The evidence shown for ``match``: the match in context, unless overridden.
+
+        ``secrets`` are the spans of secrets in the same text; the context must not cut one.
+        """
+        return context_snippet(match.string, match.start(), match.end(), keep_whole=secrets)
 
     def _finding(self, rule: Rule, field: TextField, snippet: str) -> Finding:
         return Finding(

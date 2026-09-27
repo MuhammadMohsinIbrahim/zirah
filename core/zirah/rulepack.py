@@ -80,6 +80,10 @@ class Rule(BaseModel):
 
     ``surfaces`` limits where the rule looks, e.g. only tool descriptions and schemas, so a
     phrase judged by two modules in different places is reported once.
+
+    ``min_entropy`` (bits per character) is for secret rules: a match only counts when the
+    secret it captured is at least that random, which keeps placeholders like
+    ``sk-xxxxxxxxxxxxxxxxxxxxxxxx`` out of the findings.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -95,6 +99,7 @@ class Rule(BaseModel):
     patterns: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
     ignore_case: bool = True
     surfaces: Annotated[tuple[Surface, ...], Field(min_length=1)] = MANIFEST_SURFACES
+    min_entropy: Annotated[float, Field(gt=0)] | None = None
     references: tuple[str, ...] = ()
 
     _pattern: re.Pattern[str] = PrivateAttr()

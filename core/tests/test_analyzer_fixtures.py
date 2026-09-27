@@ -30,6 +30,10 @@ BENIGN = sorted(ANALYZER_FIXTURES.glob("benign/*.json")) + sorted(
 STATIC_ANALYZERS = [cls for cls in discover_analyzers() if cls.engine is Engine.STATIC]
 PACK = load_rulepack()
 
+RUNTIME_ONLY = {"D4-AWS-SECRET-KEY", "D4-PRIVATE-KEY", "D4-JWT"}
+"""Rules exercised in test_d4_secrets.py with values built at test time, so no key block,
+token or credential pair that scanners recognise is ever committed."""
+
 
 def fixture_id(path: Path) -> str:
     return f"{path.parent.name}/{path.stem}"
@@ -67,6 +71,7 @@ def test_benign_fixture_is_clean(path: Path) -> None:
 
 def test_every_rule_is_exercised_by_a_malicious_fixture() -> None:
     covered = {entry.split(" ", 1)[0] for path in MALICIOUS for entry in expected(path)}
+    covered |= RUNTIME_ONLY
     modules = {cls.module for cls in STATIC_ANALYZERS}
     rules = {rule.id for rule in PACK.rules if rule.module in modules}
     assert sorted(rules - covered) == []
