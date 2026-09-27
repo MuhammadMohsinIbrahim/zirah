@@ -155,6 +155,12 @@ class Target(_Model):
     args: tuple[str, ...] = ()
     name: str | None = None
 
+    @property
+    def identity(self) -> tuple[TargetKind, str, tuple[str, ...]]:
+        """What makes two targets the same server. ``name`` is only a label: the same server
+        configured in two clients under different names is still one target."""
+        return (self.kind, self.location, self.args)
+
 
 class Tool(_Model):
     name: NonEmptyStr
@@ -337,4 +343,27 @@ class ScanResult(_Model):
             raise ValueError("llm must be set when the llm engine ran")
         if not llm_ran and self.llm is not None:
             raise ValueError("llm is set but the llm engine is not in engines_used")
+        return self
+
+
+class ScanSession(_Model):
+    """All results of one multi-target run (``zirah scan --all`` or several targets).
+
+    Cross-server analysis (the ``graph`` stage) consumes a session; single-target scans never
+    see each other. Each target appears at most once: dedupe before building the session.
+    """
+
+    schema_version: Literal["0.1"] = SCHEMA_VERSION
+    results: tuple[ScanResult, ...] = ()
+
+    @model_validator(mode="after")
+    def _unique_targets(self) -> ScanSession:
+        seen: set[tuple[TargetKind, str, tuple[str, ...]]] = set()
+        for result in self.results:
+            identity = result.target.identity
+            if identity in seen:
+                raise ValueError(
+                    f"duplicate target in session: {result.target.kind} {result.target.location}"
+                )
+            seen.add(identity)
         return self

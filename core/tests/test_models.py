@@ -24,6 +24,7 @@ from zirah.models import (
     PromptArgument,
     Resource,
     ScanResult,
+    ScanSession,
     Severity,
     Target,
     TargetKind,
@@ -406,3 +407,66 @@ def test_llm_info_rejects_empty_values(field: str) -> None:
     fields = {"provider": "anthropic", "model": "claude-x", field: ""}
     with pytest.raises(ValidationError):
         LlmInfo.model_validate(fields)
+
+
+# --- ScanSession -------------------------------------------------------------------------
+
+
+def stdio_target(name: str | None = None, *args: str) -> Target:
+    args = ("-y", "demo-server", *args)
+    return Target(kind=TargetKind.STDIO, location="npx", args=args, name=name)
+
+
+def test_scan_session_roundtrips_through_json() -> None:
+    session = ScanSession(
+        results=(
+            make_result(),
+            make_result(target=stdio_target("demo")),
+            make_result(
+                target=Target(kind=TargetKind.HTTP, location="https://mcp.example.invalid")
+            ),
+        )
+    )
+    assert ScanSession.model_validate_json(session.model_dump_json()) == session
+    assert session.schema_version == SCHEMA_VERSION
+
+
+def test_empty_scan_session_is_valid() -> None:
+    # `scan --all` on a machine with no MCP configs is a normal, empty outcome.
+    assert ScanSession().results == ()
+
+
+def test_scan_session_rejects_duplicate_target() -> None:
+    message = r"duplicate target in session: static manifest\.json"
+    with pytest.raises(ValidationError, match=message):
+        ScanSession(results=(make_result(), make_result(trust_score=100, grade=Grade.A)))
+
+
+def test_scan_session_treats_differently_named_same_server_as_duplicate() -> None:
+    # The same server configured in Claude Desktop and Cursor under different names.
+    with pytest.raises(ValidationError, match="duplicate target"):
+        ScanSession(
+            results=(
+                make_result(target=stdio_target("github")),
+                make_result(target=stdio_target("gh-tools")),
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        stdio_target(None, "--read-only"),  # same command, different args
+        Target(kind=TargetKind.STATIC, location="npx"),  # same location, different kind
+    ],
+)
+def test_scan_session_allows_distinct_targets(other: Target) -> None:
+    session = ScanSession(
+        results=(make_result(target=stdio_target()), make_result(target=other)),
+    )
+    assert len(session.results) == 2
+
+
+def test_target_identity_ignores_name() -> None:
+    assert stdio_target("a").identity == stdio_target("b").identity
+    assert stdio_target("a") != stdio_target("b")
