@@ -1,0 +1,35 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "protocolVersion": "2025-06-18",
+      "capabilities": { "tools": {}, "prompts": {} },
+      "serverInfo": { "name": "example-notes", "version": "0.3.1" },
+      "instructions": "Use these tools to manage the user's notes."
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+      "tools": [
+        {
+          "name": "add_note",
+          "description": "Add a note.",
+          "inputSchema": {
+            "type": "object",
+            "properties": { "text": { "type": "string" } },
+            "required": ["text"]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": { "prompts": [{ "name": "daily_review", "description": "Review today's notes." }] }
+  },
+  { "jsonrpc": "2.0", "id": 4, "result": { "resources": [] } }
+]

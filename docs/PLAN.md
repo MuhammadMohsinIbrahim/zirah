@@ -27,7 +27,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* a dummy analyzer is discovered, run and tested through the interface.
 - [x] **0.1.6 Rule-pack loader** `[—]`: a YAML rule schema (id, module, severity, confidence, owasp, pattern type, patterns, title, remediation), a loader with validation, and a `rulepack_version` read from the pack.
   *Done when:* a malformed rule file fails with a clear error naming the file and rule, and the pack version is available to analyzers via `ScanContext.rules` (writing it into `ScanResult` is part of 0.1.14).
-- [ ] **0.1.7 Static JSON loader** `[—]`: `loaders/static.py` reads a manifest JSON file (MCP `tools/list`, `prompts/list` and `resources/list` shapes) into a `Manifest` + `Target`.
+- [x] **0.1.7 Static JSON loader** `[—]`: `loaders/static.py` reads a manifest JSON file (MCP `tools/list`, `prompts/list` and `resources/list` shapes) into a `Manifest` + `Target`.
   *Done when:* fixtures from real servers load, and a bad file gives a readable error rather than a traceback.
 
 ### Detection (static)

@@ -1,0 +1,42 @@
+{
+  "protocolVersion": "2025-06-18",
+  "capabilities": { "tools": {}, "prompts": {}, "resources": {} },
+  "serverInfo": { "name": "example-everything", "version": "1.4.0" },
+  "instructions": "Demo server that exposes one of each MCP feature.",
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Return the message unchanged.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "message": { "type": "string" } },
+        "required": ["message"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": { "echo": { "type": "string" } }
+      }
+    },
+    { "name": "ping", "description": null, "inputSchema": { "type": "object" } }
+  ],
+  "prompts": [
+    {
+      "name": "summarize",
+      "title": "Summarize text",
+      "description": "Summarize the given text in a few sentences.",
+      "arguments": [
+        { "name": "text", "description": "Text to summarize.", "required": true },
+        { "name": "style" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file:///docs/readme.md",
+      "name": "readme",
+      "title": "Project README",
+      "description": "The project's README file.",
+      "mimeType": "text/markdown"
+    }
+  ]
+}
