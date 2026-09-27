@@ -54,7 +54,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
 - [x] **0.1.16 SARIF report** `[—]`: SARIF 2.1.0 with rules, results, OWASP tags, severity mapping and stable fingerprints (finding id).
   *Done when:* the output validates against the official SARIF schema in tests.
 - [x] **0.1.17 Markdown report** `[—]`: a markdown summary suitable for PR comments and READMEs.
-  *Done when:* snapshot tests pass and invisible characters in snippets are rendered visibly escaped (`​`).
+  *Done when:* snapshot tests pass and invisible characters in snippets are rendered visibly escaped (`\u200b`).
 
 ### LLM judge (optional)
 - [ ] **0.1.18 LLM provider abstraction** `[—]`: `llm/` with the provider interface, `none` (default) and `ollama`; configured by `--llm` and `ZIRAH_LLM`; temperature 0; timeouts.
