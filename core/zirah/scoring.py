@@ -76,6 +76,16 @@ CAPS: Final[tuple[CapRule, ...]] = (
     CapRule(Severity.HIGH, Confidence.HIGH, 74),  # C at best
 )
 
+SECURITY_SEVERITY: Final[dict[Severity, str]] = {
+    Severity.CRITICAL: "9.5",
+    Severity.HIGH: "8.0",
+    Severity.MEDIUM: "5.5",
+    Severity.LOW: "3.0",
+    Severity.INFO: "0.0",
+}
+"""SARIF ``security-severity`` per severity. Each sits inside the band GitHub code scanning
+uses for that severity (critical 9.0+, high 7.0-8.9, medium 4.0-6.9, low 0.1-3.9)."""
+
 POINTS_DECIMALS: Final = 2
 """Decimal places kept for each finding's points."""
 
