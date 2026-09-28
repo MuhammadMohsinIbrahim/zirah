@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import ClassVar
 
+from zirah.llm.base import LlmClient
 from zirah.models import Engine, Finding, Manifest, Module, Target
 from zirah.rulepack import RulePack
 
@@ -25,6 +26,8 @@ class ScanContext:
 
     target: Target
     rules: RulePack
+    llm: LlmClient | None = None
+    """The configured LLM, or ``None`` with ``--llm none``. Only LLM analyzers use it."""
 
 
 class AnalyzerError(Exception):

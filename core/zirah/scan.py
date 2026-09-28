@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from zirah.analyzers.base import Analyzer, ScanContext, discover_analyzers
+from zirah.llm.base import LlmClient
 from zirah.loaders import Loaded, LoaderError, load_static
 from zirah.models import Engine, Finding, Manifest, ScanResult
 from zirah.rulepack import RulePack, load_rulepack
@@ -74,11 +75,14 @@ def scan(
     rules: RulePack | None = None,
     analyzers: Sequence[type[Analyzer]] | None = None,
     clock: Clock = utc_now,
+    llm: LlmClient | None = None,
 ) -> Scan:
     """Load and scan ``target``. Raises :class:`LoaderError` when it cannot be loaded."""
     started_at = clock()
     loaded = load_target(target)
-    return scan_loaded(loaded, rules=rules, analyzers=analyzers, clock=clock, started_at=started_at)
+    return scan_loaded(
+        loaded, rules=rules, analyzers=analyzers, clock=clock, started_at=started_at, llm=llm
+    )
 
 
 def scan_loaded(
@@ -88,6 +92,7 @@ def scan_loaded(
     analyzers: Sequence[type[Analyzer]] | None = None,
     clock: Clock = utc_now,
     started_at: datetime | None = None,
+    llm: LlmClient | None = None,
 ) -> Scan:
     """Scan an already loaded target with ``analyzers`` (default: every discovered one)."""
     started_at = started_at or clock()
@@ -96,7 +101,7 @@ def scan_loaded(
     if not classes:
         raise ScanError("no analyzers to run")
 
-    ctx = ScanContext(target=loaded.target, rules=pack)
+    ctx = ScanContext(target=loaded.target, rules=pack, llm=llm)
     manifest_sha256 = loaded.manifest.sha256()
     with ThreadPoolExecutor(max_workers=min(len(classes), MAX_WORKERS)) as pool:
         futures = [pool.submit(_run, cls, loaded.manifest, ctx) for cls in classes]
