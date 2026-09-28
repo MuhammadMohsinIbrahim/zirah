@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from zirah.models import Severity
+from zirah.models import ScoreDeduction, Severity
 from zirah.report.common import (
     GRADE_MEANING,
     SAME_TEXT,
@@ -27,7 +27,7 @@ from zirah.report.common import (
     severity_counts,
 )
 from zirah.scan import Scan
-from zirah.scoring import LOCATION_DECAY, SAME_LOCATION_SHARE, Deduction
+from zirah.scoring import LOCATION_DECAY, SAME_LOCATION_SHARE
 
 _SPECIAL = re.compile(r"([\\`*_{}\[\]()<>#+!|~&@:])")
 _BACKTICKS = re.compile(r"`+")
@@ -160,7 +160,7 @@ def _breakdown(scan: Scan) -> list[str]:
     return lines
 
 
-def _breakdown_row(d: Deduction) -> str:
+def _breakdown_row(d: ScoreDeduction) -> str:
     cells = [
         md_code(d.finding_id, in_table=True),
         md_code(d.rule_id, in_table=True),

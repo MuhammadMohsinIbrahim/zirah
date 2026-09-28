@@ -1,0 +1,43 @@
+{
+  "serverInfo": {
+    "name": "mail-templates",
+    "version": "3.1.0"
+  },
+  "instructions": "Templates fill {placeholders} from the prompt arguments the user enters in the client.",
+  "prompts": [
+    {
+      "name": "digest",
+      "description": "Summarize today's updates and send the digest to {{recipient}}.",
+      "arguments": [
+        {
+          "name": "recipient",
+          "description": "Email address that receives the digest, e.g. team@example.invalid.",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "weekly_report",
+      "description": "Email the weekly report to {email}."
+    },
+    {
+      "name": "build_status",
+      "description": "Post the build status to ${webhook_url} after each run."
+    },
+    {
+      "name": "invoice",
+      "description": "Send the invoice to {{customer.email}} and CC {{account_manager}}."
+    },
+    {
+      "name": "review_request",
+      "description": "Email the summary to any of the listed reviewers."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file:///templates/notify.md",
+      "name": "notify_template",
+      "description": "Notification template. Sends the alert to the URL given in the configuration."
+    }
+  ]
+}

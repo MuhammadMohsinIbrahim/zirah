@@ -2,7 +2,7 @@
 
 Exit codes of ``zirah scan``:
 
-- 0: no findings at or above ``--fail-on``
+- 0: no findings at or above ``--fail-on`` (default ``high``; ``none`` never fails)
 - 1: at least one finding at or above ``--fail-on``
 - 2: usage error, the target could not be loaded, the report could not be written, or an
   analyzer failed (the scan is incomplete, so it cannot be called clean)
@@ -90,7 +90,7 @@ def scan_command(
             "--fail-on",
             help="Exit with 1 when a finding has this severity or higher ('none': never).",
         ),
-    ] = FailOn.INFO,
+    ] = FailOn.HIGH,
 ) -> None:
     """Scan a target and print a report with its grade, trust score and findings.
 

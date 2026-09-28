@@ -16,7 +16,7 @@ zirah scan server.json                          # terminal report: grade, trust 
 zirah scan server.json --format json -o out.json
 zirah scan server.json --format sarif -o zirah.sarif   # GitHub code scanning
 zirah scan server.json --format markdown -o report.md # PR comments, READMEs
-zirah scan server.json --fail-on high           # CI: fail only on high or critical findings
+zirah scan server.json --fail-on medium         # CI: also fail on medium findings (default: high)
 ```
 
 `server.json` is an MCP manifest: the output of `tools/list`, `prompts/list` and
@@ -25,9 +25,20 @@ list of those.
 
 | Exit code | Meaning |
 |---|---|
-| 0 | No findings at or above `--fail-on` (default `info`: any finding; `none` never fails) |
+| 0 | No findings at or above `--fail-on` (default `high`; `info` fails on any finding, `none` never fails) |
 | 1 | At least one finding at or above `--fail-on` |
 | 2 | Usage error, target not loadable, report not writable, or an analyzer failed |
+
+## Troubleshooting
+
+**`zirah` is blocked on Windows** ("An Application Control policy has blocked this file",
+os error 4551). Windows Application Control or Smart App Control can block the small
+`zirah.exe` launcher that pip, pipx or uv create. Run the same CLI through Python instead:
+
+```bash
+python -m zirah scan server.json
+uv run python -m zirah scan server.json   # from a clone of this repository
+```
 
 ## Development
 

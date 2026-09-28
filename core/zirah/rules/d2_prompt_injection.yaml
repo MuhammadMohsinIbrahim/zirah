@@ -93,8 +93,8 @@ rules:
 
   # Sending results to a fixed address ("email the weekly report to team@...") is a normal
   # thing for a prompt to do, so a destination alone is not a finding. What is: sending
-  # sensitive content anywhere (D2-EXFIL-INSTRUCTION), or sending anything to a destination
-  # the model or the processed content picks (D2-EXFIL-OPEN-DESTINATION). Both stay within
+  # sensitive content anywhere (D2-EXFIL-INSTRUCTION), or sending anything to an arbitrary
+  # destination the model or user names (D2-EXFIL-OPEN-DESTINATION). Both stay within
   # one sentence: a sentence ends at . ! or ? followed by a space, so ~/.ssh and URLs do not
   # end it. Borderline wording ("send a summary of the chat to ...") is left to the LLM judge.
   - id: D2-EXFIL-INSTRUCTION
@@ -164,16 +164,17 @@ rules:
           \b(?:to|at|into)\s+(?:[a-z][\w+.-]*://|[\w.+-]+@[\w-]+\.|\{\{?\s*[\w.-]+\s*\}\}?|\$\{\s*[\w.-]+\s*\})
         )
 
+  # Template variables ({{recipient}}, {email}, ${webhook_url}) are normal in prompts and are
+  # not flagged on their own. This rule is only for wording that leaves the destination open.
   - id: D2-EXFIL-OPEN-DESTINATION
     module: D2
-    severity: high
-    confidence: medium
+    severity: medium
+    confidence: low
     owasp: [MCP06]
-    title: Tells the model to send data to a destination it or the content picks
+    title: Tells the model to send data to any destination it or the user names
     remediation: >-
-      Send results only to a destination fixed in the server's configuration and visible to
-      the user. A destination taken from processed content, a template variable or the
-      model's own choice lets injected text redirect the data.
+      Send results only to a destination fixed in the server's configuration or chosen in
+      the client. "Any URL" or "an address of your choice" lets injected text redirect data.
     kind: regex
     surfaces: [prompts, resources, instructions]
     patterns:
@@ -181,22 +182,22 @@ rules:
         (?x:
           \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|leak|submit)\b
           (?:(?![.!?](?:\s|$))[^\n]){0,60}?
-          \b(?:to|at|into)\s+
           (?:
-              # template variables: {recipient}, {{url}}, ${endpoint}
-              \{\{?\s*[\w.-]+\s*\}\}? | \$\{\s*[\w.-]+\s*\}
-              # chosen by the model: "any URL you choose", "an address of your choice"
-            | (?:any|whatever|whichever|an?|the)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)s?
-              \s+(?:that\s+|which\s+)?(?:you|the\s+(?:model|assistant|agent))\s+
-              (?:choose|chooses|pick|picks|prefer|prefers|decide|decides|see\s+fit|sees\s+fit|find|finds|want|wants|like|likes)\b
-            | (?:any|whatever|an?)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)
-              \s+of\s+your\s+(?:choice|choosing)\b
-              # taken from content: "the URL given in the tool output", "the address in the message"
-            | (?:the|any|whatever)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)s?
-              \s+(?:(?:that|which)\s+(?:is|are|was|were)\s+)?
-              (?:(?:given|provided|specified|supplied|found|listed|mentioned|contained|included|named|returned|received|embedded)\s+)?
-              (?:in|by|within|from|inside)\s+(?:the\s+|a\s+|this\s+|that\s+|any\s+|each\s+)?(?:user'?s\s+)?
-              (?:user|input|message|response|reply|result|output|tool\s+(?:output|result|response)|document|page|resource|argument|parameter|email|content|text|request|conversation)s?\b
+              \b(?:to|at|into)\s+
+              (?:
+                  # "any URL", "whatever endpoint", "whichever address"
+                  (?:any|whatever|whichever)\s+(?:urls?|address(?:es)?|endpoints?|webhooks?|servers?|hosts?|email(?:\s+address)?|recipients?|destinations?)\b
+                  # "an address of your choice", "a URL of your choosing"
+                | (?:an?|any)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)
+                  \s+of\s+(?:your|the\s+user'?s|their)\s+(?:choice|choosing)\b
+                  # "the destination you choose", "a URL the user picks"
+                | (?:the|an?)\s+(?:url|address|endpoint|webhook|server|host|email(?:\s+address)?|recipient|destination)
+                  \s+(?:that\s+|which\s+)?(?:you|the\s+(?:user|model|assistant|agent)|they)\s+
+                  (?:choose|chooses|pick|picks|prefer|prefers|decide|decides|see\s+fit|sees\s+fit|want|wants|like|likes|name|names)\b
+              )
+              # "wherever the user says", "wherever you want"
+            | \bwherever\s+(?:you|the\s+(?:user|model|assistant|agent)|they)\s+
+              (?:say|says|want|wants|choose|chooses|like|likes|prefer|prefers|specify|specifies|ask|asks|decide|decides|see\s+fit|sees\s+fit)\b
           )
         )
 

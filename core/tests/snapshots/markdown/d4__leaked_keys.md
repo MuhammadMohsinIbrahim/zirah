@@ -7,7 +7,7 @@ Severe findings. Do not use this server until they are fixed.
 | Target | `d4/leaked_keys.json` |
 | Server | ops-helper 0.4.2 |
 | Findings | 9 at 8 locations: 5 critical, 4 high |
-| Rule pack | 2026.09.6 |
+| Rule pack | 2026.09.7 |
 | Engines | static |
 | Zirah | 0.1.0.dev0 |
 
@@ -100,6 +100,6 @@ Each finding's weight is its severity weight times its confidence multiplier. At
 | `f9dd28746ebd1f71` | `D4-SECRET-ASSIGNMENT` | `/tools/2/description` | 15 | 1 | 0.21 | 3.15 |
 | | | | | | **Total** | **149.89** |
 
-Trust score: 100 - 150 points (deductions rounded up) = 0 (a score cannot go below 0).
+Trust score: 100 - 150 points (deductions rounded up) = 0 (floored at 0).
 
 </details>

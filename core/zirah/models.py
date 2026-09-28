@@ -27,7 +27,7 @@ from pydantic import (
 
 from zirah import __version__
 
-SCHEMA_VERSION: Final = "0.1"
+SCHEMA_VERSION: Final = "0.2"
 """Version of the serialized finding/result schema. Bump on any breaking change."""
 
 SNIPPET_MAX_CHARS: Final = 2000
@@ -293,18 +293,54 @@ class LlmInfo(_Model):
     model: NonEmptyStr
 
 
+class ScoreDeduction(_Model):
+    """What one finding cost: ``points = weight * share * decay`` (see ``zirah.scoring``)."""
+
+    finding_id: NonEmptyStr
+    rule_id: NonEmptyStr
+    location: NonEmptyStr
+    weight: Annotated[float, Field(ge=0)]
+    """Severity weight times confidence multiplier."""
+    share: Annotated[float, Field(gt=0, le=1)]
+    """1 for the heaviest finding at its location, less for the others there."""
+    decay: Annotated[float, Field(gt=0, le=1)]
+    """Diminishing-returns factor of the finding's location."""
+    points: Annotated[float, Field(ge=0)]
+
+
+class ScoreCap(_Model):
+    """A hard cap that lowered the trust score, and the findings that triggered it."""
+
+    limit: Annotated[int, Field(ge=0, le=100)]
+    severity: Severity
+    confidence: Confidence
+    finding_ids: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
+
+
+class ScoreBreakdown(_Model):
+    """How ``trust_score`` follows from the findings: one deduction per finding, their total,
+    the total rounded up, the score before any cap, and the cap if one applied."""
+
+    deductions: tuple[ScoreDeduction, ...] = ()
+    total_points: Annotated[float, Field(ge=0)]
+    deducted_points: Annotated[int, Field(ge=0)]
+    uncapped_score: Annotated[int, Field(ge=0, le=100)]
+    cap: ScoreCap | None = None
+
+
 class ScanResult(_Model):
     """The outcome of scanning one target.
 
     ``trust_score`` runs from 0 to 100, where 100 means no findings, and ``grade`` is its
     letter form (A best). Both are computed by ``zirah.scoring``, which alone defines the
-    weights and grade thresholds, and every point deducted must trace back to ``findings``.
+    weights and grade thresholds, and every point deducted must trace back to ``findings``;
+    ``score_breakdown``, when present, lists exactly those points per finding id.
     ``engines_used`` lists every engine that ran, including ones that found nothing, and
     ``llm`` is set exactly when the LLM engine ran.
     ``signature`` stays ``None`` until attestations land (v0.3).
     """
 
-    schema_version: Literal["0.1"] = SCHEMA_VERSION
+    schema_version: Literal["0.2"] = SCHEMA_VERSION
     target: Target
     manifest_sha256: Sha256Hex
     zirah_version: NonEmptyStr = __version__
@@ -316,6 +352,7 @@ class ScanResult(_Model):
     finished_at: AwareDatetime
     engines_used: Annotated[tuple[Engine, ...], Field(min_length=1)]
     llm: LlmInfo | None = None
+    score_breakdown: ScoreBreakdown | None = None
     signature: str | None = None
 
     @field_validator("engines_used")
@@ -343,7 +380,23 @@ class ScanResult(_Model):
             raise ValueError("llm must be set when the llm engine ran")
         if not llm_ran and self.llm is not None:
             raise ValueError("llm is set but the llm engine is not in engines_used")
+
+        if self.score_breakdown is not None:
+            self._check_breakdown(self.score_breakdown, set(ids))
         return self
+
+    def _check_breakdown(self, breakdown: ScoreBreakdown, finding_ids: set[str]) -> None:
+        deducted = [d.finding_id for d in breakdown.deductions]
+        if len(deducted) != len(set(deducted)) or set(deducted) != finding_ids:
+            raise ValueError("score_breakdown must have exactly one deduction per finding")
+        cap = breakdown.cap
+        if cap is not None and not set(cap.finding_ids) <= finding_ids:
+            raise ValueError("score_breakdown cap names findings that are not in the result")
+        expected = min(breakdown.uncapped_score, cap.limit) if cap else breakdown.uncapped_score
+        if self.trust_score != expected:
+            raise ValueError(
+                f"trust_score {self.trust_score} does not match score_breakdown ({expected})"
+            )
 
 
 class ScanSession(_Model):
@@ -353,7 +406,7 @@ class ScanSession(_Model):
     see each other. Each target appears at most once: dedupe before building the session.
     """
 
-    schema_version: Literal["0.1"] = SCHEMA_VERSION
+    schema_version: Literal["0.2"] = SCHEMA_VERSION
     results: tuple[ScanResult, ...] = ()
 
     @model_validator(mode="after")

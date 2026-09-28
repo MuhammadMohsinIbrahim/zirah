@@ -66,6 +66,4 @@ def test_no_findings() -> None:
 def test_score_below_zero_says_it_is_floored() -> None:
     text = terminal.plain_text(scan(str(FIXTURES / "d4" / "leaked_keys.json")))
     flat = " ".join(text.split())
-    assert (
-        "Score: 100 - 150 points (deductions rounded up) = 0 (a score cannot go below 0)." in flat
-    )
+    assert "Score: 100 - 150 points (deductions rounded up) = 0 (floored at 0)." in flat

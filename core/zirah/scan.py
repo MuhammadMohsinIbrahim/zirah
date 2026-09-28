@@ -113,19 +113,20 @@ def scan_loaded(
             findings.setdefault(finding.id, finding)
 
     deduped = tuple(findings.values())
-    breakdown = score(deduped)
+    scored = score(deduped)
     result = ScanResult(
         target=loaded.target,
         manifest_sha256=manifest_sha256,
         rulepack_version=pack.version,
         findings=deduped,
-        trust_score=breakdown.trust_score,
-        grade=breakdown.grade,
+        trust_score=scored.trust_score,
+        grade=scored.grade,
         started_at=started_at,
         finished_at=clock(),
         engines_used=_engines(classes),
+        score_breakdown=scored.breakdown,
     )
-    return Scan(result=result, manifest=loaded.manifest, score=breakdown, failures=tuple(failures))
+    return Scan(result=result, manifest=loaded.manifest, score=scored, failures=tuple(failures))
 
 
 def _run(
