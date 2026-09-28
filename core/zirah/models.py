@@ -287,10 +287,15 @@ def finding_id(rule_id: Any, evidence: Evidence) -> str:
 
 
 class LlmInfo(_Model):
-    """Which model judged a scan. LLM findings are only reproducible with this recorded."""
+    """Which model judged a scan, and how. LLM findings are only explainable with this
+    recorded: ``prompt_sha256`` identifies the judge prompt and reply schema, and
+    ``temperature`` is what was sent (``None`` for models that take no sampling parameters).
+    """
 
     provider: LlmProvider
     model: NonEmptyStr
+    prompt_sha256: Sha256Hex | None = None
+    temperature: Annotated[float, Field(ge=0)] | None = None
 
 
 class ScoreDeduction(_Model):

@@ -44,7 +44,7 @@ def test_flag_overrides_env_and_model_may_contain_colons() -> None:
     client = resolve("ollama:qwen2.5:7b", env={"ZIRAH_LLM": "none", "OLLAMA_HOST": "gpu:11434"})
     assert isinstance(client, OllamaClient)
     assert (client.model, client.host) == ("qwen2.5:7b", "http://gpu:11434")
-    assert client.info == LlmInfo(provider=LlmProvider.OLLAMA, model="qwen2.5:7b")
+    assert client.info == LlmInfo(provider=LlmProvider.OLLAMA, model="qwen2.5:7b", temperature=0.0)
 
 
 @pytest.mark.parametrize(

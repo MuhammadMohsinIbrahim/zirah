@@ -73,7 +73,7 @@ def test_every_rule_is_exercised_by_a_malicious_fixture() -> None:
     covered = {entry.split(" ", 1)[0] for path in MALICIOUS for entry in expected(path)}
     covered |= RUNTIME_ONLY
     modules = {cls.module for cls in STATIC_ANALYZERS}
-    rules = {rule.id for rule in PACK.rules if rule.module in modules}
+    rules = {rule.id for rule in PACK.rules if rule.module in modules and rule.kind != "llm"}
     assert sorted(rules - covered) == []
 
 

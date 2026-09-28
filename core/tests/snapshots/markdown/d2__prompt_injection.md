@@ -7,7 +7,7 @@ Severe findings. Do not use this server until they are fixed.
 | Target | `d2/prompt_injection.json` |
 | Server | notes-prompts 0.3.0 |
 | Findings | 9 at 4 locations: 3 critical, 5 high, 1 medium |
-| Rule pack | 2026.09.7 |
+| Rule pack | 2026.09.8 |
 | Engines | static |
 | Zirah | 0.1.0.dev0 |
 

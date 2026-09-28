@@ -113,13 +113,16 @@ Finding     { id, module (D1..D14), rule_id, severity, confidence, owasp[1..],
               engine (static|llm|dynamic) }
 ScanResult  { schema_version, target, manifest_sha256, zirah_version, rulepack_version,
               findings[], trust_score (0–100, 100 = no findings), grade (A–F),
-              started_at, finished_at, engines_used[], llm {provider, model} | null,
-              signature }
+              started_at, finished_at, engines_used[],
+              llm {provider, model, prompt_sha256, temperature} | null,
+              score_breakdown {deductions[], total_points, deducted_points,
+                               uncapped_score, cap} | null,
+              signature }                                  (schema_version "0.2")
 ScanSession { results[] }                                   (v0.1, for scan --all)
 ```
 **Trust score:** 0–100, where 100 means no findings. Grades: **A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40**. Thresholds and weights are defined in `scoring.py` only.
 
-**Added in v0.3 with `attest.py`** (not before): `key_id`, `attestation_level: self | registry`, and for LLM findings the prompt hash and temperature (always 0).
+**Added in v0.3 with `attest.py`** (not before): `key_id` and `attestation_level: self | registry`. The LLM prompt hash and temperature are already recorded in `llm` since v0.1 (temperature is 0, or `null` for models that accept no sampling parameters).
 
 ### 4.3 Execution modes (running untrusted server code)
 

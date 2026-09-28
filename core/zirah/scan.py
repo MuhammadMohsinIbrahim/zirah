@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from zirah.analyzers.base import Analyzer, ScanContext, discover_analyzers
+from zirah.judge import Judge
 from zirah.llm.base import LlmClient
 from zirah.loaders import Loaded, LoaderError, load_static
 from zirah.models import Engine, Finding, Manifest, ScanResult
@@ -98,10 +99,13 @@ def scan_loaded(
     started_at = started_at or clock()
     pack = rules if rules is not None else load_rulepack()
     classes = discover_analyzers() if analyzers is None else list(analyzers)
+    if llm is None:  # LLM analyzers only run when an LLM is configured
+        classes = [cls for cls in classes if cls.engine is not Engine.LLM]
     if not classes:
         raise ScanError("no analyzers to run")
 
-    ctx = ScanContext(target=loaded.target, rules=pack, llm=llm)
+    judge = Judge(llm, pack) if llm is not None else None
+    ctx = ScanContext(target=loaded.target, rules=pack, llm=llm, judge=judge)
     manifest_sha256 = loaded.manifest.sha256()
     with ThreadPoolExecutor(max_workers=min(len(classes), MAX_WORKERS)) as pool:
         futures = [pool.submit(_run, cls, loaded.manifest, ctx) for cls in classes]
@@ -129,6 +133,7 @@ def scan_loaded(
         started_at=started_at,
         finished_at=clock(),
         engines_used=_engines(classes),
+        llm=judge.info if judge and Engine.LLM in _engines(classes) else None,
         score_breakdown=scored.breakdown,
     )
     return Scan(result=result, manifest=loaded.manifest, score=scored, failures=tuple(failures))

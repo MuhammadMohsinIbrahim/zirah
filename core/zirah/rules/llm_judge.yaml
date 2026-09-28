@@ -1,0 +1,59 @@
+# LLM judge (optional, `--llm ...`): semantic checks that catch paraphrased attacks the
+# regex rules miss. These rules never match text themselves. `patterns` lists the categories
+# the judge may report; each category belongs to exactly one rule. `surfaces` limits which
+# texts are sent to the judge for that category.
+#
+# Confidence here is a ceiling: a finding gets the lower of this and the judge's own
+# confidence. It stays at medium so an LLM verdict alone never triggers a score cap.
+rules:
+  - id: D1-LLM-HIDDEN-INSTRUCTIONS
+    module: D1
+    severity: high
+    confidence: medium
+    owasp: [MCP03]
+    title: "Semantic check: tool text gives the model instructions the user does not see"
+    remediation: >-
+      Rewrite the text so it only describes what the tool does and its arguments. Tool
+      metadata must not tell the model to act, read files, hide steps or pass data on.
+    kind: llm
+    surfaces: [tools]
+    patterns: [hidden_instructions]
+
+  - id: D2-LLM-PROMPT-INJECTION
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: "Semantic check: prompt or resource text tries to override the model's instructions"
+    remediation: >-
+      Remove the text. Prompts, resources and server instructions must not try to override
+      the model's instructions, change its role or hide things from the user.
+    kind: llm
+    surfaces: [prompts, resources, instructions]
+    patterns: [prompt_injection]
+
+  - id: D2-LLM-DATA-EXFILTRATION
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: "Semantic check: text asks the model to send sensitive data somewhere"
+    remediation: >-
+      Remove the instruction. Nothing a server says should move the conversation, system
+      prompt, credentials or local files to another destination.
+    kind: llm
+    surfaces: [prompts, resources, instructions]
+    patterns: [data_exfiltration]
+
+  - id: D3-LLM-TOOL-SHADOWING
+    module: D3
+    severity: medium
+    confidence: medium
+    owasp: [MCP03]
+    title: "Semantic check: tool text changes how other tools are used"
+    remediation: >-
+      Remove the text. A tool should describe itself, not redirect, replace or add steps to
+      other tools.
+    kind: llm
+    surfaces: [tools]
+    patterns: [tool_shadowing]

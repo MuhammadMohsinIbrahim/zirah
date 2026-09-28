@@ -14,11 +14,11 @@
 #       owasp: [MCP03]               # one or more of MCP01..MCP10
 #       title: Invisible zero-width characters
 #       remediation: Remove the invisible characters from the text.
-#       kind: codepoints             # regex | keywords | codepoints
+#       kind: codepoints             # regex | keywords | codepoints | llm (judge categories)
 #       patterns: ["U+200B-U+200D", "U+2060"]
 #       ignore_case: true            # optional, default true (not used by codepoints)
 #       surfaces: [tools]            # optional: tools | prompts | resources | instructions |
 #                                    # server | target. Default: everything in the manifest
 #                                    # (target args are only scanned when listed).
 #       references: []               # optional URLs
-version: "2026.09.7"
+version: "2026.09.8"

@@ -56,8 +56,13 @@ class LlmClient(ABC):
         self._transport = transport
 
     @property
+    def temperature(self) -> float | None:
+        """The temperature sent with each request, or ``None`` when the model takes none."""
+        return TEMPERATURE
+
+    @property
     def info(self) -> LlmInfo:
-        return LlmInfo(provider=self.provider, model=self.model)
+        return LlmInfo(provider=self.provider, model=self.model, temperature=self.temperature)
 
     @abstractmethod
     def complete_json(self, system: str, user: str, schema: dict[str, Any]) -> str:
