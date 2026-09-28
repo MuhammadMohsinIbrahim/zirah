@@ -21,6 +21,7 @@ import typer
 from rich.console import Console
 
 from zirah import __version__
+from zirah.llm import LlmError, resolve
 from zirah.loaders import LoaderError
 from zirah.models import Severity
 from zirah.report import json as json_report
@@ -91,6 +92,14 @@ def scan_command(
             help="Exit with 1 when a finding has this severity or higher ('none': never).",
         ),
     ] = FailOn.HIGH,
+    llm: Annotated[
+        str | None,
+        typer.Option(
+            "--llm",
+            help="LLM judge: none (default, offline) or ollama[:model]. Env: ZIRAH_LLM.",
+            show_default=False,
+        ),
+    ] = None,
 ) -> None:
     """Scan a target and print a report with its grade, trust score and findings.
 
@@ -100,8 +109,8 @@ def scan_command(
     _safe_stdout()
     stderr = Console(stderr=True, highlight=False, soft_wrap=True)
     try:
-        outcome = scan(target)
-    except (LoaderError, ScanError) as exc:
+        outcome = scan(target, llm=resolve(llm))
+    except (LoaderError, ScanError, LlmError) as exc:
         stderr.print(f"error: {exc}", markup=False)
         raise typer.Exit(EXIT_ERROR) from None
 

@@ -57,7 +57,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* snapshot tests pass and invisible characters in snippets are rendered visibly escaped (`\u200b`).
 
 ### LLM judge (optional)
-- [ ] **0.1.18 LLM provider abstraction** `[—]`: `llm/` with the provider interface, `none` (default) and `ollama`; configured by `--llm` and `ZIRAH_LLM`; temperature 0; timeouts.
+- [x] **0.1.18 LLM provider abstraction** `[—]`: `llm/` with the provider interface, `none` (default) and `ollama`; configured by `--llm` and `ZIRAH_LLM`; temperature 0; timeouts.
   *Done when:* everything passes with `--llm none` and no network, and Ollama is covered with a mocked HTTP test.
 - [ ] **0.1.19 OpenAI + Anthropic providers** `[—]`: keys come only from env vars; there are no provider imports outside `llm/`.
   *Done when:* mocked tests cover the success, rate-limit and malformed-response paths.
