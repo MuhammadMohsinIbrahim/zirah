@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "ws-local": {
+      "command": "python",
+      "args": [
+        "server.py"
+      ]
+    }
+  }
+}

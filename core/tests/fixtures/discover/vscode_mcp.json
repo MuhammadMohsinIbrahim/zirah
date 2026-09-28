@@ -1,0 +1,25 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "api-key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "fetch": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ]
+    },
+    "search": {
+      "type": "http",
+      "url": "https://search.example.invalid/mcp",
+      "headers": {
+        "X-Api-Key": "${input:api-key}"
+      }
+    }
+  }
+}

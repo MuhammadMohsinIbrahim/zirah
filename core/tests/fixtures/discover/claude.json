@@ -1,0 +1,32 @@
+{
+  "numStartups": 12,
+  "mcpServers": {
+    "notes": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "-m",
+        "notes_server",
+        "--token",
+        "zirah_fake_4f9c2e71b8d3a605x"
+      ]
+    },
+    "remote-docs": {
+      "type": "http",
+      "url": "https://docs.example.invalid/mcp",
+      "headers": {
+        "Authorization": "Bearer zirah_fake_bearer_5e8a1c7d2f9b0346"
+      }
+    }
+  },
+  "projects": {
+    "/home/me/app": {
+      "mcpServers": {
+        "db": {
+          "type": "sse",
+          "url": "https://db.example.invalid/sse?api_key=zirah_fake_4f9c2e71b8d3a605"
+        }
+      }
+    }
+  }
+}

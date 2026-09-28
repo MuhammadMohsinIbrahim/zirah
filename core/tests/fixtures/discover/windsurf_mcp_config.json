@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sequential": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/sequential-thinking"
+      ]
+    },
+    "remote": {
+      "serverUrl": "https://windsurf.example.invalid/mcp"
+    }
+  }
+}
