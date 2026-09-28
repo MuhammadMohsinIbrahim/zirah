@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from zirah.analyzers.common import TARGET_PREFIX
-from zirah.models import Finding, Grade, Manifest, Severity
+from zirah.models import Finding, Grade, Manifest, Severity, Target
 from zirah.scoring import MAX_SCORE, Score, finding_weight
 
 BACKSLASH = chr(92)
@@ -214,3 +214,10 @@ def score_formula(score: Score) -> str:
     if score.cap:
         text += f", capped at {score.cap.limit}"
     return text
+
+
+def target_label(target: Target) -> str:
+    """The target as one line: the file, URL or command, then its arguments (quoted when they
+    hold spaces). Secrets were already redacted when the result was built."""
+    parts = [target.location, *target.args]
+    return " ".join(f'"{part}"' if not part or " " in part else part for part in parts)

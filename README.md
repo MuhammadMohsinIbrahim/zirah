@@ -18,7 +18,12 @@ zirah scan server.json --format sarif -o zirah.sarif   # GitHub code scanning
 zirah scan server.json --format markdown -o report.md # PR comments, READMEs
 zirah scan server.json --fail-on medium         # CI: also fail on medium findings (default: high)
 zirah scan server.json --llm ollama:llama3.1:8b  # optional LLM judge (local); also openai, anthropic
+zirah scan --allow-exec npx -y some-mcp-server  # run a stdio server (no isolation!)
 ```
+
+`--allow-exec` runs the server's code on your machine with your user permissions to read its
+manifest; Zirah prints a warning, applies time and size limits and kills the whole process
+tree afterwards. Prefer a static manifest when you can.
 
 `server.json` is an MCP manifest: the output of `tools/list`, `prompts/list` and
 `resources/list` (optionally with `serverInfo` and `instructions`), a JSON-RPC response, or a

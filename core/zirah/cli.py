@@ -23,10 +23,11 @@ from rich.console import Console
 from zirah import __version__
 from zirah.llm import LlmError, resolve
 from zirah.loaders import LoaderError
-from zirah.models import Severity
+from zirah.loaders.stdio import EXEC_WARNING
+from zirah.models import Severity, TargetKind
 from zirah.report import json as json_report
 from zirah.report import markdown, sarif, terminal
-from zirah.scan import Scan, ScanError, scan
+from zirah.scan import Scan, ScanError, scan, target_kind
 
 EXIT_CLEAN = 0
 EXIT_FINDINGS = 1
@@ -77,7 +78,20 @@ def main(
 
 @app.command("scan")
 def scan_command(
-    target: Annotated[str, typer.Argument(help="MCP manifest JSON file to scan.")],
+    target: Annotated[
+        str,
+        typer.Argument(
+            help="MCP manifest JSON file, or a stdio server command (needs --allow-exec).",
+            show_default=False,
+        ),
+    ],
+    args: Annotated[
+        list[str] | None,
+        typer.Argument(
+            help="Arguments for a stdio server command. Put -- before ones that start with -.",
+            show_default=False,
+        ),
+    ] = None,
     output_format: Annotated[
         OutputFormat, typer.Option("--format", "-f", help="Report format.")
     ] = OutputFormat.TERMINAL,
@@ -103,6 +117,13 @@ def scan_command(
             show_default=False,
         ),
     ] = None,
+    allow_exec: Annotated[
+        bool,
+        typer.Option(
+            "--allow-exec",
+            help="Run a stdio server on this machine to read its manifest (no isolation).",
+        ),
+    ] = False,
 ) -> None:
     """Scan a target and print a report with its grade, trust score and findings.
 
@@ -112,7 +133,11 @@ def scan_command(
     _safe_stdout()
     stderr = Console(stderr=True, highlight=False, soft_wrap=True)
     try:
-        outcome = scan(target, llm=resolve(llm))
+        client = resolve(llm)
+        server_args = tuple(args or ())
+        if allow_exec and target_kind(target, server_args) is TargetKind.STDIO:
+            stderr.print(f"Warning: {EXEC_WARNING}", style="bold red", markup=False)
+        outcome = scan(target, server_args, allow_exec=allow_exec, llm=client)
     except (LoaderError, ScanError, LlmError) as exc:
         stderr.print(f"error: {exc}", markup=False)
         raise typer.Exit(EXIT_ERROR) from None

@@ -25,6 +25,7 @@ from zirah.report.common import (
     one_line,
     score_formula,
     severity_counts,
+    target_label,
 )
 from zirah.scan import Scan
 from zirah.scoring import LOCATION_DECAY, SAME_LOCATION_SHARE
@@ -87,7 +88,7 @@ def _summary(scan: Scan) -> list[str]:
         found = f"{len(result.findings)} at {where} location{'' if where == 1 else 's'}: {counts}"
     else:
         found = "none"
-    rows = [("Target", md_code(result.target.location, in_table=True))]
+    rows = [("Target", md_code(target_label(result.target), in_table=True))]
     server = " ".join(p for p in (manifest.server_name, manifest.server_version) if p)
     if server:
         rows.append(("Server", md_text(server)))
