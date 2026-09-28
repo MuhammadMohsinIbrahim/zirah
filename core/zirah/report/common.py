@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from zirah.analyzers.common import TARGET_PREFIX
 from zirah.models import Finding, Grade, Manifest, Severity
-from zirah.scoring import Score, finding_weight
+from zirah.scoring import MAX_SCORE, Score, finding_weight
 
 BACKSLASH = chr(92)
 
@@ -31,6 +31,9 @@ NAME_CHARS = 60
 """Longest tool/prompt/resource name shown in a location label."""
 
 LOCATION_SEPARATOR = " \N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK} "
+
+SAME_TEXT = "(same text as above)"
+"""Shown instead of a snippet identical to the previous finding's at the same location."""
 
 GRADE_MEANING: dict[Grade, str] = {
     Grade.A: "No significant findings.",
@@ -197,3 +200,17 @@ def cap_explanation(score: Score) -> str | None:
         f"Capped at {score.cap.limit} (from {score.uncapped_score}): {count} {score.cap.severity} "
         f"{noun} with {score.cap.confidence} confidence."
     )
+
+
+def score_formula(score: Score) -> str:
+    """How the score follows from the deductions, e.g.
+    ``100 - 87 points (deductions rounded up) = 13``, plus the floor and cap when they apply."""
+    text = (
+        f"{MAX_SCORE} - {score.deducted_points} points (deductions rounded up) "
+        f"= {score.uncapped_score}"
+    )
+    if score.deducted_points > MAX_SCORE:
+        text += " (a score cannot go below 0)"
+    if score.cap:
+        text += f", capped at {score.cap.limit}"
+    return text

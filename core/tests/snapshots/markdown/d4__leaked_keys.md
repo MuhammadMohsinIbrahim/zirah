@@ -100,6 +100,6 @@ Each finding's weight is its severity weight times its confidence multiplier. At
 | `f9dd28746ebd1f71` | `D4-SECRET-ASSIGNMENT` | `/tools/2/description` | 15 | 1 | 0.21 | 3.15 |
 | | | | | | **Total** | **149.89** |
 
-Trust score: 100 - 149.89 points, rounded up = 0.
+Trust score: 100 - 150 points (deductions rounded up) = 0 (a score cannot go below 0).
 
 </details>

@@ -15,6 +15,7 @@ import re
 from zirah.models import Severity
 from zirah.report.common import (
     GRADE_MEANING,
+    SAME_TEXT,
     LocationGroup,
     cap_explanation,
     describe_location,
@@ -22,6 +23,7 @@ from zirah.report.common import (
     escape_text,
     group_by_location,
     one_line,
+    score_formula,
     severity_counts,
 )
 from zirah.scan import Scan
@@ -58,7 +60,7 @@ def render(scan: Scan) -> str:
     lines += [
         f"## Zirah scan: grade {result.grade}, trust score {result.trust_score}/100",
         "",
-        GRADE_MEANING[result.grade],
+        GRADE_MEANING[result.grade] if result.findings else "No findings.",
         "",
     ]
     lines += _summary(scan)
@@ -116,7 +118,7 @@ def _location(scan: Scan, group: LocationGroup) -> list[str]:
         md_code(group.location),
         "",
     ]
-    shown: set[str] = set()
+    previous: str | None = None
     for finding in group.findings:
         points = scan.score.points_for(finding.id)
         lines.append(
@@ -124,9 +126,9 @@ def _location(scan: Scan, group: LocationGroup) -> list[str]:
             f"({md_code(finding.rule_id)}, -{points:g} pts)"
         )
         snippet = display_snippet(finding)
-        if snippet not in shown:
-            shown.add(snippet)
-            lines.append(f"  - Evidence: {_span(snippet)}")
+        evidence = md_text(SAME_TEXT) if snippet == previous else _span(snippet)
+        lines.append(f"  - Evidence: {evidence}")
+        previous = snippet
         lines.append(f"  - Fix: {md_text(one_line(finding.remediation))}")
     lines.append("")
     return lines
@@ -149,13 +151,8 @@ def _breakdown(scan: Scan) -> list[str]:
         *(_breakdown_row(d) for d in score.deductions),
         f"| | | | | | **Total** | **{score.total_points:g}** |",
         "",
-        f"Trust score: 100 - {score.total_points:g} points, rounded up = {score.uncapped_score}"
-        + (
-            f", capped at {score.cap.limit} by "
-            + ", ".join(md_code(i) for i in score.cap.finding_ids)
-            if score.cap
-            else ""
-        )
+        f"Trust score: {score_formula(score)}"
+        + (" by " + ", ".join(md_code(i) for i in score.cap.finding_ids) if score.cap else "")
         + ".",
         "",
         "</details>",

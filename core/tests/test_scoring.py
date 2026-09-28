@@ -256,6 +256,7 @@ def test_every_deducted_point_traces_to_a_finding(findings: list[Finding]) -> No
         assert result.points_for(d.finding_id) == d.points
     assert result.total_points == pytest.approx(sum(d.points for d in result.deductions))
     assert result.uncapped_score == MAX_SCORE - math.ceil(result.total_points)
+    assert result.deducted_points == math.ceil(result.total_points)
     assert result.trust_score == result.uncapped_score
 
 

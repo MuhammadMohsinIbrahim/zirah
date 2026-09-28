@@ -91,6 +91,14 @@ def test_no_breakdown_without_findings() -> None:
     text = markdown.render(fixture_scan("benign/everyday_tools"))
     assert "<details>" not in text
     assert "| Findings | none |" in text
+    assert "\n\nNo findings.\n\n" in text
+    assert "No significant findings." not in text
+
+
+def test_same_snippet_as_the_finding_above_is_referenced() -> None:
+    text = markdown.render(fixture_scan("d1/hidden_instructions"))
+    evidence = "  - Evidence: \\(same text as above\\)"
+    assert evidence + "\n  - Fix: Remove the comment." in text
 
 
 @pytest.mark.parametrize(
@@ -177,4 +185,4 @@ def test_score_cap_is_explained() -> None:
     text = markdown.render(scan_loaded(loaded, clock=lambda: START))
     cap = "Capped at 39 (from 60): 1 critical finding with high confidence."
     assert f"> **Score cap:** {cap}" in text
-    assert "rounded up = 60, capped at 39 by `" in text
+    assert "100 - 40 points (deductions rounded up) = 60, capped at 39 by `" in text
