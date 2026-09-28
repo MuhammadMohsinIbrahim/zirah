@@ -9,19 +9,27 @@ with that reason; on the Ubuntu CI runner they always run.
 
 from __future__ import annotations
 
+import contextlib
+import socket
+import subprocess
 import sys
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from zirah.loaders import mcp_client, parse_manifest
-from zirah.loaders.stdio import load_stdio
+from zirah.loaders.http import load_http
+from zirah.loaders.stdio import kill_process_tree, load_stdio
 from zirah.models import Manifest
 
 try:
     import anyio
     from mcp import Client, StdioServerParameters
+    from mcp.client.sse import sse_client
 except Exception as exc:  # pragma: no cover - depends on the machine
     if sys.platform.startswith("linux"):
         raise  # never skip on the CI runner
@@ -78,3 +86,51 @@ def test_stdio_manifest_matches_the_sdk_on_the_initialize_handshake(
     params = StdioServerParameters(command=sys.executable, args=[SERVER])
     theirs = anyio.run(sdk_manifest, params)
     assert ours == theirs
+
+
+def _free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port: int = sock.getsockname()[1]
+        return port
+
+
+@contextmanager
+def sdk_http_server(transport: str) -> Iterator[int]:
+    """Start the SDK server on a free local port and stop its process tree afterwards."""
+    port = _free_port()
+    process = subprocess.Popen(  # noqa: S603 - our own test server
+        [sys.executable, SERVER, transport, str(port)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,  # POSIX: own group, killed as one; ignored on Windows
+    )
+    try:
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            with contextlib.suppress(OSError), socket.create_connection(("127.0.0.1", port), 0.5):
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail(f"SDK {transport} server did not start")
+        yield port
+    finally:
+        kill_process_tree(process)
+
+
+def test_streamable_http_manifest_matches_the_sdk() -> None:
+    with sdk_http_server("streamable-http") as port:
+        url = f"http://127.0.0.1:{port}/mcp"
+        ours = load_http(url, transport="streamable-http").manifest
+        theirs = anyio.run(sdk_manifest, url)
+    assert ours == theirs
+    assert ours.server_name == "sdk-conformance"
+
+
+def test_sse_manifest_matches_the_sdk() -> None:
+    with sdk_http_server("sse") as port:
+        url = f"http://127.0.0.1:{port}/sse"
+        ours = load_http(url, transport="sse").manifest
+        theirs = anyio.run(sdk_manifest, sse_client(url))
+    assert ours == theirs
+    assert [t.name for t in ours.tools] == ["add", "echo"]

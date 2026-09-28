@@ -50,6 +50,12 @@ class OutputFormat(StrEnum):
     MARKDOWN = "markdown"
 
 
+class HttpTransport(StrEnum):
+    AUTO = "auto"
+    STREAMABLE_HTTP = "streamable-http"
+    SSE = "sse"
+
+
 class FailOn(StrEnum):
     INFO = "info"
     LOW = "low"
@@ -81,7 +87,7 @@ def scan_command(
     target: Annotated[
         str,
         typer.Argument(
-            help="MCP manifest JSON file, or a stdio server command (needs --allow-exec).",
+            help="Manifest JSON file, server URL, or stdio server command (needs --allow-exec).",
             show_default=False,
         ),
     ],
@@ -117,6 +123,10 @@ def scan_command(
             show_default=False,
         ),
     ] = None,
+    transport: Annotated[
+        HttpTransport,
+        typer.Option("--transport", help="HTTP transport for URL targets."),
+    ] = HttpTransport.AUTO,
     allow_exec: Annotated[
         bool,
         typer.Option(
@@ -137,7 +147,9 @@ def scan_command(
         server_args = tuple(args or ())
         if allow_exec and target_kind(target, server_args) is TargetKind.STDIO:
             stderr.print(f"Warning: {EXEC_WARNING}", style="bold red", markup=False)
-        outcome = scan(target, server_args, allow_exec=allow_exec, llm=client)
+        outcome = scan(
+            target, server_args, allow_exec=allow_exec, transport=transport.value, llm=client
+        )
     except (LoaderError, ScanError, LlmError) as exc:
         stderr.print(f"error: {exc}", markup=False)
         raise typer.Exit(EXIT_ERROR) from None

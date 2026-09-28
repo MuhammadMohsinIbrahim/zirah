@@ -20,6 +20,7 @@ from zirah.analyzers.common import redact_target
 from zirah.judge import Judge
 from zirah.llm.base import LlmClient
 from zirah.loaders import Loaded, LoaderError, load_static
+from zirah.loaders.http import HttpTransportName, load_http
 from zirah.loaders.stdio import load_stdio
 from zirah.models import Engine, Finding, Manifest, Module, ScanResult, TargetKind
 from zirah.rulepack import RulePack, load_rulepack
@@ -74,14 +75,21 @@ def target_kind(target: str, args: Sequence[str] = ()) -> TargetKind:
     return TargetKind.STDIO
 
 
-def load_target(target: str, args: Sequence[str] = (), *, allow_exec: bool = False) -> Loaded:
+def load_target(
+    target: str,
+    args: Sequence[str] = (),
+    *,
+    allow_exec: bool = False,
+    transport: HttpTransportName = "auto",
+) -> Loaded:
     """Load ``target`` (see :func:`target_kind`). A stdio command only runs with
-    ``allow_exec``; extra ``args`` are passed to it."""
+    ``allow_exec``; extra ``args`` are passed to it. ``transport`` picks the HTTP transport
+    for URLs."""
     kind = target_kind(target, args)
     if kind is TargetKind.HTTP:
-        raise LoaderError(
-            f"{target}: remote targets are not supported yet; pass a manifest JSON file"
-        )
+        if args:
+            raise LoaderError(f"{target}: extra arguments only apply to stdio commands")
+        return load_http(target, transport=transport)
     if kind is TargetKind.STATIC:
         return load_static(Path(target))
     return load_stdio(target, args, allow_exec=allow_exec)
@@ -92,6 +100,7 @@ def scan(
     args: Sequence[str] = (),
     *,
     allow_exec: bool = False,
+    transport: HttpTransportName = "auto",
     rules: RulePack | None = None,
     analyzers: Sequence[type[Analyzer]] | None = None,
     clock: Clock = utc_now,
@@ -99,7 +108,7 @@ def scan(
 ) -> Scan:
     """Load and scan ``target``. Raises :class:`LoaderError` when it cannot be loaded."""
     started_at = clock()
-    loaded = load_target(target, args, allow_exec=allow_exec)
+    loaded = load_target(target, args, allow_exec=allow_exec, transport=transport)
     return scan_loaded(
         loaded, rules=rules, analyzers=analyzers, clock=clock, started_at=started_at, llm=llm
     )
