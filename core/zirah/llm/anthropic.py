@@ -63,8 +63,8 @@ class AnthropicClient(LlmClient):
         return f"AnthropicClient(model={self.model!r})"
 
     @property
-    def uses_temperature(self) -> bool:
-        return not self.model.startswith(NO_SAMPLING_PARAMS)
+    def temperature(self) -> float | None:
+        return None if self.model.startswith(NO_SAMPLING_PARAMS) else TEMPERATURE
 
     def complete_json(self, system: str, user: str, schema: dict[str, Any]) -> str:
         payload: dict[str, Any] = {
@@ -75,8 +75,8 @@ class AnthropicClient(LlmClient):
             "output_config": {"format": {"type": "json_schema", "schema": schema}},
         }
         headers = {"x-api-key": self._api_key, "anthropic-version": API_VERSION}
-        if self.uses_temperature:
-            payload["temperature"] = TEMPERATURE
+        if self.temperature is not None:
+            payload["temperature"] = self.temperature
         if self.model in FALLBACK_MODELS:
             payload["fallbacks"] = "default"
             headers["anthropic-beta"] = FALLBACK_BETA

@@ -9,11 +9,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from types import ModuleType
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from zirah.llm.base import LlmClient
 from zirah.models import Engine, Finding, Manifest, Module, Target
 from zirah.rulepack import RulePack
+
+if TYPE_CHECKING:
+    from zirah.judge import Judge
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +31,8 @@ class ScanContext:
     rules: RulePack
     llm: LlmClient | None = None
     """The configured LLM, or ``None`` with ``--llm none``. Only LLM analyzers use it."""
+    judge: Judge | None = None
+    """The scan's LLM judge when an LLM is configured; the LLM analyzers read it."""
 
 
 class AnalyzerError(Exception):

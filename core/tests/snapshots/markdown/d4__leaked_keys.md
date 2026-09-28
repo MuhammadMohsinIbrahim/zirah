@@ -7,7 +7,7 @@ Severe findings. Do not use this server until they are fixed.
 | Target | `d4/leaked_keys.json` |
 | Server | ops-helper 0.4.2 |
 | Findings | 9 at 8 locations: 5 critical, 4 high |
-| Rule pack | 2026.09.7 |
+| Rule pack | 2026.09.8 |
 | Engines | static |
 | Zirah | 0.1.0.dev0 |
 

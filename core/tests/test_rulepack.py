@@ -49,7 +49,7 @@ def rules_file(*rules: str) -> str:
 
 def test_bundled_pack_loads() -> None:
     pack = load_rulepack()
-    assert pack.version == "2026.09.7"
+    assert pack.version == "2026.09.8"
     assert len({rule.id for rule in pack.rules}) == len(pack.rules)
 
 
@@ -291,3 +291,16 @@ def test_duplicate_id_across_files_names_both(tmp_path: Path) -> None:
     )
     with pytest.raises(RulePackError, match=r"b\.yaml: duplicate rule id 'D1-SAME' .*a\.yaml"):
         load_rulepack(tmp_path)
+
+
+def test_llm_rules_never_match_and_are_kept_apart(tmp_path: Path) -> None:
+    pack = load_one(tmp_path, "llm", ["hidden_instructions", "tool_shadowing"])
+    assert matches(pack, "hidden_instructions tool_shadowing anything") == []
+    assert pack.llm_rules() == pack.rules
+    assert pack.for_module(pack.rules[0].module) == ()
+
+
+@pytest.mark.parametrize("category", ["Hidden", "two words", "x-y"])
+def test_llm_categories_must_be_snake_case(tmp_path: Path, category: str) -> None:
+    with pytest.raises(RulePackError, match="llm categories must be snake_case"):
+        load_one(tmp_path, "llm", [category])

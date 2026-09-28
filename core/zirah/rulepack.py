@@ -36,6 +36,7 @@ RuleId = Annotated[str, StringConstraints(pattern=r"^D\d{1,2}-[A-Z0-9]+(?:-[A-Z0
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1)]
 
 _CODEPOINT = re.compile(r"^U\+([0-9A-F]{4,6})$")
+_CATEGORY = re.compile(r"[a-z][a-z0-9_]*")
 
 
 class RulePackError(Exception):
@@ -77,6 +78,9 @@ class Rule(BaseModel):
     - ``regex``: each entry is a Python regular expression.
     - ``keywords``: each entry is a literal phrase, matched on word boundaries.
     - ``codepoints``: each entry is ``U+XXXX`` or a range ``U+XXXX-U+YYYY``.
+    - ``llm``: each entry is a category the optional LLM judge may report (``snake_case``).
+      These rules never match text themselves; they give the judge's findings their id,
+      severity, confidence ceiling, OWASP mapping and remediation.
 
     ``surfaces`` limits where the rule looks, e.g. only tool descriptions and schemas, so a
     phrase judged by two modules in different places is reported once.
@@ -95,7 +99,7 @@ class Rule(BaseModel):
     owasp: Annotated[tuple[Owasp, ...], Field(min_length=1)]
     title: NonEmptyStr
     remediation: NonEmptyStr
-    kind: Literal["regex", "keywords", "codepoints"]
+    kind: Literal["regex", "keywords", "codepoints", "llm"]
     patterns: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
     ignore_case: bool = True
     surfaces: Annotated[tuple[Surface, ...], Field(min_length=1)] = MANIFEST_SURFACES
@@ -123,6 +127,11 @@ class Rule(BaseModel):
 
 def _compile(rule: Rule) -> re.Pattern[str]:
     flags = re.IGNORECASE if rule.ignore_case else 0
+    if rule.kind == "llm":
+        bad = [p for p in rule.patterns if not _CATEGORY.fullmatch(p)]
+        if bad:
+            raise ValueError(f"llm categories must be snake_case, got {bad[0]!r}")
+        return re.compile(r"(?!)")  # matches nothing: the judge reports these, not a regex
     if rule.kind == "regex":
         source = "|".join(f"(?:{p})" for p in rule.patterns)
     elif rule.kind == "keywords":
@@ -171,7 +180,12 @@ class RulePack(BaseModel):
     rules: tuple[Rule, ...] = ()
 
     def for_module(self, module: Module) -> tuple[Rule, ...]:
-        return tuple(rule for rule in self.rules if rule.module is module)
+        """The text-matching rules of ``module`` (``llm`` rules are left out)."""
+        return tuple(r for r in self.rules if r.module is module and r.kind != "llm")
+
+    def llm_rules(self) -> tuple[Rule, ...]:
+        """The rules the LLM judge reports under, every module."""
+        return tuple(rule for rule in self.rules if rule.kind == "llm")
 
 
 def load_rulepack(path: Path | None = None) -> RulePack:

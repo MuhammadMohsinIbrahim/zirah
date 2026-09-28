@@ -66,7 +66,9 @@ def anthropic_reply(*blocks: dict[str, Any], stop_reason: str = "end_turn") -> h
 def test_resolve_reads_keys_only_from_env() -> None:
     client = resolve("openai", env={"OPENAI_API_KEY": KEY})
     assert isinstance(client, OpenAIClient)
-    assert client.info == LlmInfo(provider=LlmProvider.OPENAI, model=OPENAI_DEFAULT)
+    assert client.info == LlmInfo(
+        provider=LlmProvider.OPENAI, model=OPENAI_DEFAULT, temperature=0.0
+    )
     client = resolve("anthropic:claude-sonnet-5", env={"ANTHROPIC_API_KEY": KEY})
     assert isinstance(client, AnthropicClient)
     assert client.model == "claude-sonnet-5"
