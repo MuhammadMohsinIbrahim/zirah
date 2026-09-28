@@ -1,0 +1,10 @@
+{
+  // VS Code settings may hold comments and trailing commas.
+  "editor.fontSize": 14,
+  /* MCP servers defined in settings */
+  "mcp": {
+    "servers": {
+      "time": {"command": "uvx", "args": ["mcp-server-time", "--tz=UTC"],},
+    },
+  },
+}

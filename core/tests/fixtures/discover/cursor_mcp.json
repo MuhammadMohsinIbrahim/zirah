@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "weather": {
+      "command": "uvx",
+      "args": [
+        "weather-mcp"
+      ],
+      "env": {
+        "WEATHER_API_KEY": "zirah_fake_weather_91c3"
+      }
+    },
+    "broken": {
+      "note": "no command or url"
+    },
+    "linear": {
+      "url": "https://mcp.linear.example.invalid/sse"
+    }
+  }
+}

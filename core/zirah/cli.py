@@ -21,10 +21,12 @@ import typer
 from rich.console import Console
 
 from zirah import __version__
+from zirah.discover import discover
 from zirah.llm import LlmError, resolve
 from zirah.loaders import LoaderError
 from zirah.loaders.stdio import EXEC_WARNING
 from zirah.models import Severity, TargetKind
+from zirah.report import discover as discover_report
 from zirah.report import json as json_report
 from zirah.report import markdown, sarif, terminal
 from zirah.scan import Scan, ScanError, scan, target_kind
@@ -173,6 +175,39 @@ def scan_command(
     for failure in outcome.failures:
         stderr.print(f"warning: analyzer {failure.analyzer} failed: {failure.error}", markup=False)
     raise typer.Exit(exit_code(outcome, fail_on))
+
+
+class DiscoverFormat(StrEnum):
+    TERMINAL = "terminal"
+    JSON = "json"
+
+
+@app.command("discover")
+def discover_command(
+    output_format: Annotated[
+        DiscoverFormat, typer.Option("--format", "-f", help="Report format.")
+    ] = DiscoverFormat.TERMINAL,
+    approved: Annotated[
+        Path | None,
+        typer.Option(
+            "--approved",
+            help="Approved servers (default ~/.config/zirah/approved.yaml, env ZIRAH_APPROVED).",
+            show_default=False,
+        ),
+    ] = None,
+) -> None:
+    """List the MCP servers configured in Claude Desktop, Claude Code, Cursor, VS Code and
+    Windsurf on this machine. Read-only and offline; nothing is run or uploaded.
+
+    Exit codes: 0 done, 1 servers missing from the approved list (only when a list exists).
+    """
+    _safe_stdout()
+    found = discover(cwd=Path.cwd(), approved_path=approved)
+    if output_format is DiscoverFormat.JSON:
+        sys.stdout.write(discover_report.render_json(found))
+    else:
+        discover_report.print_report(found, Console(highlight=False))
+    raise typer.Exit(EXIT_FINDINGS if found.unapproved else EXIT_CLEAN)
 
 
 def exit_code(outcome: Scan, fail_on: FailOn) -> int:
