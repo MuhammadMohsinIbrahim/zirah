@@ -59,7 +59,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
 ### LLM judge (optional)
 - [x] **0.1.18 LLM provider abstraction** `[—]`: `llm/` with the provider interface, `none` (default) and `ollama`; configured by `--llm` and `ZIRAH_LLM`; temperature 0; timeouts.
   *Done when:* everything passes with `--llm none` and no network, and Ollama is covered with a mocked HTTP test.
-- [ ] **0.1.19 OpenAI + Anthropic providers** `[—]`: keys come only from env vars; there are no provider imports outside `llm/`.
+- [x] **0.1.19 OpenAI + Anthropic providers** `[—]`: keys come only from env vars; there are no provider imports outside `llm/`.
   *Done when:* mocked tests cover the success, rate-limit and malformed-response paths.
 - [ ] **0.1.20 LLM judge for D1–D3** `[D1][D2][D3]`: a prompt that classifies descriptions and returns structured output; findings get `engine=llm` and `LlmInfo` is recorded. Untrusted text is fenced and the judge is told it is data.
   *Done when:* the judge adds findings on semantic fixtures that the static rules miss, and an injection aimed at the judge itself is a test case.

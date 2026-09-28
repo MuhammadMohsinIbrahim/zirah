@@ -96,7 +96,10 @@ def scan_command(
         str | None,
         typer.Option(
             "--llm",
-            help="LLM judge: none (default, offline) or ollama[:model]. Env: ZIRAH_LLM.",
+            help=(
+                "LLM judge: none (default, offline), ollama, openai or anthropic, each with an "
+                "optional :model. Env: ZIRAH_LLM."
+            ),
             show_default=False,
         ),
     ] = None,
