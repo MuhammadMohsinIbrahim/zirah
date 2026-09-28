@@ -66,7 +66,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Note:* re-check D2-EXFIL borderline cases semantically (e.g. "send a summary of the chat to <fixed address>", sensitive content named after the destination).
 
 ### Live loaders
-- [ ] **0.1.21 stdio loader** `[—]`: official `mcp` SDK; requires `--allow-exec` and prints the red host-execution warning from SPEC §4.3; applies a timeout and kills the process tree.
+- [x] **0.1.21 stdio loader** `[—]`: in-house MCP client (official `mcp` SDK only in conformance tests); requires `--allow-exec` and prints the red host-execution warning from SPEC §4.3; applies a timeout and kills the process tree.
   *Done when:* without the flag the loader refuses with the warning text, and with it a test server's manifest is extracted and the process is gone afterwards.
 - [ ] **0.1.22 Streamable HTTP + SSE loaders** `[—]`: fetch the manifest from remote servers with timeouts and no auth by default.
   *Done when:* both transports are tested against in-process test servers.

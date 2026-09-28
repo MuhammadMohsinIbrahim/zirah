@@ -98,6 +98,8 @@ zirah/                      (monorepo)
 └── docker-compose.yml       postgres, redis, api, worker, web
 ```
 
+**MCP client:** Runtime uses a minimal in-house MCP client for a small, auditable dependency footprint; the official SDK is used for conformance tests. The client only negotiates (protocol 2025-03-26 and newer: `initialize` for 2025-era servers, `server/discover` for 2026-07-28) and lists tools, prompts and resources. It never calls a tool, and it enforces limits on message size, items, pages, per-request time and total time.
+
 ### 4.1 Scan pipeline
 
 `load target → extract manifest (tools/prompts/resources/instructions) → hash manifest → run analyzers in parallel → (optional) detonate in sandbox → dedupe findings → score → (optional) sign attestation → output / publish to registry`

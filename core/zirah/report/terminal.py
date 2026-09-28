@@ -28,6 +28,7 @@ from zirah.report.common import (
     one_line,
     score_formula,
     severity_counts,
+    target_label,
 )
 from zirah.scan import Scan
 
@@ -82,7 +83,7 @@ def _header(scan: Scan) -> RenderableType:
     lines = Text()
     lines.append("Zirah scan report\n", style="bold")
     lines.append("Target  ", style="dim")
-    lines.append(escape_text(result.target.location) + "\n")
+    lines.append(escape_text(target_label(result.target)) + "\n")
     if scan.manifest.server_name or scan.manifest.server_version:
         server = " ".join(
             escape_text(part)

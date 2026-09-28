@@ -174,6 +174,28 @@ def redact_secrets(text: str, rules: Sequence[Rule]) -> str:
     return text
 
 
+def redact_target(target: Target, rules: Sequence[Rule]) -> Target:
+    """``target`` with secrets in its location and arguments redacted.
+
+    Arguments are matched as one command line (so ``--token VALUE`` is seen as a pair); an
+    argument that holds part of a secret but no whole one is redacted as a whole.
+    """
+    starts, pos = [], 0
+    for arg in target.args:
+        starts.append(pos)
+        pos += len(arg) + 1
+    joined = " ".join(target.args)
+    spans = [span for rule in rules for m in rule.finditer(joined) for span in secret_spans(m)]
+    args = []
+    for arg, start in zip(target.args, starts, strict=True):
+        cleaned = redact_secrets(arg, rules)
+        overlaps = any(s < start + len(arg) and e > start for s, e in spans)
+        args.append(cleaned if cleaned != arg or not overlaps else redact(arg))
+    return target.model_copy(
+        update={"location": redact_secrets(target.location, rules), "args": tuple(args)}
+    )
+
+
 class RuleAnalyzer(Analyzer):
     """An analyzer whose detections all come from its module's YAML rules.
 

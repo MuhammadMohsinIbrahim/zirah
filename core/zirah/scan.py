@@ -16,10 +16,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from zirah.analyzers.base import Analyzer, ScanContext, discover_analyzers
+from zirah.analyzers.common import redact_target
 from zirah.judge import Judge
 from zirah.llm.base import LlmClient
 from zirah.loaders import Loaded, LoaderError, load_static
-from zirah.models import Engine, Finding, Manifest, ScanResult
+from zirah.loaders.stdio import load_stdio
+from zirah.models import Engine, Finding, Manifest, Module, ScanResult, TargetKind
 from zirah.rulepack import RulePack, load_rulepack
 from zirah.scoring import Score, score
 
@@ -61,18 +63,35 @@ class Scan:
         return not self.failures
 
 
-def load_target(target: str) -> Loaded:
-    """Load ``target``. For now only static manifest files are supported."""
+def target_kind(target: str, args: Sequence[str] = ()) -> TargetKind:
+    """How ``target`` will be loaded: a URL is remote, an existing file (or any ``.json``
+    path) is a static manifest, and anything else is a command to run over stdio."""
     if _URL.match(target):
+        return TargetKind.HTTP
+    path = Path(target)
+    if not args and (path.is_file() or path.suffix.lower() == ".json"):
+        return TargetKind.STATIC
+    return TargetKind.STDIO
+
+
+def load_target(target: str, args: Sequence[str] = (), *, allow_exec: bool = False) -> Loaded:
+    """Load ``target`` (see :func:`target_kind`). A stdio command only runs with
+    ``allow_exec``; extra ``args`` are passed to it."""
+    kind = target_kind(target, args)
+    if kind is TargetKind.HTTP:
         raise LoaderError(
             f"{target}: remote targets are not supported yet; pass a manifest JSON file"
         )
-    return load_static(Path(target))
+    if kind is TargetKind.STATIC:
+        return load_static(Path(target))
+    return load_stdio(target, args, allow_exec=allow_exec)
 
 
 def scan(
     target: str,
+    args: Sequence[str] = (),
     *,
+    allow_exec: bool = False,
     rules: RulePack | None = None,
     analyzers: Sequence[type[Analyzer]] | None = None,
     clock: Clock = utc_now,
@@ -80,7 +99,7 @@ def scan(
 ) -> Scan:
     """Load and scan ``target``. Raises :class:`LoaderError` when it cannot be loaded."""
     started_at = clock()
-    loaded = load_target(target)
+    loaded = load_target(target, args, allow_exec=allow_exec)
     return scan_loaded(
         loaded, rules=rules, analyzers=analyzers, clock=clock, started_at=started_at, llm=llm
     )
@@ -124,7 +143,8 @@ def scan_loaded(
     deduped = tuple(findings.values())
     scored = score(deduped)
     result = ScanResult(
-        target=loaded.target,
+        # Secrets in the command line or URL stay out of every report.
+        target=redact_target(loaded.target, pack.for_module(Module.D4)),
         manifest_sha256=manifest_sha256,
         rulepack_version=pack.version,
         findings=deduped,

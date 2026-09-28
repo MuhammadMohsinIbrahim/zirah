@@ -21,13 +21,25 @@ from pydantic import BaseModel, ValidationError
 from zirah.loaders.base import Loaded, LoaderError
 from zirah.models import Manifest, Prompt, PromptArgument, Resource, Target, TargetKind, Tool
 
+Source = Path | str
+"""Where data came from, for error messages: a file path or a server label."""
+
 MAX_MANIFEST_BYTES = 20 * 1024 * 1024
 """Refuse larger files: a manifest is kilobytes, and the input is untrusted."""
 
 
 def load_static(path: Path) -> Loaded:
     """Read a manifest JSON file. Raises :class:`LoaderError` with a readable message."""
-    data = _parse(path)
+    manifest = parse_manifest(_parse(path), path)
+    # The path is kept as given: resolving it would put the user's directories into reports.
+    target = Target(kind=TargetKind.STATIC, location=str(path), name=manifest.server_name)
+    return Loaded(target=target, manifest=manifest)
+
+
+def parse_manifest(data: Any, source: Source) -> Manifest:
+    """Build a ``Manifest`` from decoded MCP JSON in any accepted layout. ``source`` (a path
+    or a server label) prefixes error messages. Raises :class:`LoaderError`."""
+    path = source
     parts = data if isinstance(data, list) else [data]
 
     tools: list[Tool] = []
@@ -65,7 +77,7 @@ def load_static(path: Path) -> Loaded:
             path, None, "no MCP data found (expected tools, prompts, resources, serverInfo)"
         )
 
-    manifest = Manifest(
+    return Manifest(
         server_name=server_name,
         server_version=server_version,
         instructions=instructions,
@@ -73,9 +85,6 @@ def load_static(path: Path) -> Loaded:
         prompts=tuple(prompts),
         resources=tuple(resources),
     )
-    # The path is kept as given: resolving it would put the user's directories into reports.
-    target = Target(kind=TargetKind.STATIC, location=str(path), name=server_name)
-    return Loaded(target=target, manifest=manifest)
 
 
 # --- Reading -----------------------------------------------------------------------------
@@ -105,7 +114,7 @@ def _parse(path: Path) -> Any:
         ) from exc
 
 
-def _items(part: dict[str, Any], key: str, where: str, path: Path) -> list[tuple[str, Any]]:
+def _items(part: dict[str, Any], key: str, where: str, path: Source) -> list[tuple[str, Any]]:
     """The list at ``part[key]``, each item paired with its location for error messages."""
     items = part[key]
     if not isinstance(items, list):
@@ -113,7 +122,7 @@ def _items(part: dict[str, Any], key: str, where: str, path: Path) -> list[tuple
     return [(f"{where}{key}[{i}]", item) for i, item in enumerate(items)]
 
 
-def _unwrap(part: dict[str, Any], where: str, path: Path) -> dict[str, Any]:
+def _unwrap(part: dict[str, Any], where: str, path: Source) -> dict[str, Any]:
     if "error" in part and "jsonrpc" in part:
         raise _error(path, where or None, "is a JSON-RPC error response, not a result")
     if "result" in part and "jsonrpc" in part:
@@ -124,7 +133,7 @@ def _unwrap(part: dict[str, Any], where: str, path: Path) -> dict[str, Any]:
 # --- Mapping MCP objects to the contract --------------------------------------------------
 
 
-def _tool(raw: Any, where: str, path: Path) -> Tool:
+def _tool(raw: Any, where: str, path: Source) -> Tool:
     obj = _expect_dict(raw, where, path)
     return _build(
         Tool,
@@ -139,7 +148,7 @@ def _tool(raw: Any, where: str, path: Path) -> Tool:
     )
 
 
-def _prompt(raw: Any, where: str, path: Path) -> Prompt:
+def _prompt(raw: Any, where: str, path: Source) -> Prompt:
     obj = _expect_dict(raw, where, path)
     arguments = obj.get("arguments")
     if arguments is None:
@@ -159,7 +168,7 @@ def _prompt(raw: Any, where: str, path: Path) -> Prompt:
     )
 
 
-def _argument(raw: Any, where: str, path: Path) -> PromptArgument:
+def _argument(raw: Any, where: str, path: Source) -> PromptArgument:
     obj = _expect_dict(raw, where, path)
     return _build(
         PromptArgument,
@@ -171,7 +180,7 @@ def _argument(raw: Any, where: str, path: Path) -> PromptArgument:
     )
 
 
-def _resource(raw: Any, where: str, path: Path) -> Resource:
+def _resource(raw: Any, where: str, path: Source) -> Resource:
     obj = _expect_dict(raw, where, path)
     return _build(
         Resource,
@@ -191,7 +200,7 @@ def _description(obj: dict[str, Any]) -> Any:
     return "" if value is None else value
 
 
-def _build[M: BaseModel](model: type[M], where: str, path: Path, **fields: Any) -> M:
+def _build[M: BaseModel](model: type[M], where: str, path: Source, **fields: Any) -> M:
     try:
         return model.model_validate(fields)
     except ValidationError as exc:
@@ -203,13 +212,13 @@ def _build[M: BaseModel](model: type[M], where: str, path: Path, **fields: Any) 
 # --- Helpers -----------------------------------------------------------------------------
 
 
-def _expect_dict(value: Any, where: str, path: Path) -> dict[str, Any]:
+def _expect_dict(value: Any, where: str, path: Source) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise _error(path, where, f"must be an object, not {_json_type(value)}")
     return value
 
 
-def _optional_str(value: Any, where: str, path: Path) -> str | None:
+def _optional_str(value: Any, where: str, path: Source) -> str | None:
     if value is None or isinstance(value, str):
         return value
     raise _error(path, where, f"must be a string, not {_json_type(value)}")
@@ -224,5 +233,5 @@ def _json_type(value: Any) -> str:
     return kinds.get(type(value), type(value).__name__)
 
 
-def _error(path: Path, where: str | None, message: str) -> LoaderError:
+def _error(path: Source, where: str | None, message: str) -> LoaderError:
     return LoaderError(f"{path}: {where}: {message}" if where else f"{path}: {message}")
