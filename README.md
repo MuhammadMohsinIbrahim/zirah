@@ -20,6 +20,7 @@ zirah scan server.json --fail-on medium         # CI: also fail on medium findin
 zirah scan server.json --llm ollama:llama3.1:8b  # optional LLM judge (local); also openai, anthropic
 zirah scan https://mcp.example.com/mcp          # remote server (Streamable HTTP or SSE)
 zirah discover                                  # list MCP servers configured on this machine (offline)
+zirah scan --all --format json -o session.json  # scan every discovered server (stdio only with --allow-exec)
 zirah scan --allow-exec npx -y some-mcp-server  # run a stdio server (no isolation!)
 ```
 

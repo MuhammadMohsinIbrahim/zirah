@@ -14,15 +14,17 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, Literal
 
 from zirah.analyzers.base import Analyzer, ScanContext, discover_analyzers
 from zirah.analyzers.common import redact_target
+from zirah.discover import DiscoveredServer
 from zirah.judge import Judge
 from zirah.llm.base import LlmClient
 from zirah.loaders import Loaded, LoaderError, load_static
 from zirah.loaders.http import HttpTransportName, load_http
 from zirah.loaders.stdio import load_stdio
-from zirah.models import Engine, Finding, Manifest, Module, ScanResult, TargetKind
+from zirah.models import Engine, Finding, Manifest, Module, ScanResult, ScanSession, TargetKind
 from zirah.rulepack import RulePack, load_rulepack
 from zirah.scoring import Score, score
 
@@ -179,3 +181,77 @@ def _run(
 
 def _engines(classes: Sequence[type[Analyzer]]) -> tuple[Engine, ...]:
     return tuple({cls.engine: None for cls in classes})
+
+
+# --- Several targets ------------------------------------------------------------------------------
+
+EntryStatus = Literal["scanned", "skipped", "failed", "duplicate"]
+
+
+@dataclass(frozen=True, slots=True)
+class SessionEntry:
+    """What happened to one discovered server in a multi-target run."""
+
+    server: DiscoveredServer
+    status: EntryStatus
+    scan: Scan | None = None
+    message: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class SessionScan:
+    session: ScanSession
+    entries: tuple[SessionEntry, ...]
+
+    @property
+    def scans(self) -> tuple[Scan, ...]:
+        return tuple(entry.scan for entry in self.entries if entry.scan is not None)
+
+
+def scan_all(
+    servers: Sequence[DiscoveredServer],
+    *,
+    allow_exec: bool = False,
+    rules: RulePack | None = None,
+    analyzers: Sequence[type[Analyzer]] | None = None,
+    clock: Clock = utc_now,
+    llm: LlmClient | None = None,
+) -> SessionScan:
+    """Scan every server once and collect the results in one ``ScanSession``.
+
+    stdio servers are skipped unless ``allow_exec``; a server configured in several clients is
+    scanned once; a server that cannot be loaded is reported as failed and the run goes on.
+    """
+    pack = rules if rules is not None else load_rulepack()
+    secret_rules = pack.for_module(Module.D4)
+    entries: list[SessionEntry] = []
+    first_seen: dict[tuple[Any, ...], str] = {}
+    for server in servers:
+        target = server.target()
+        label = f"{server.client}/{server.name}"
+        keys = (target.identity, redact_target(target, secret_rules).identity)
+        earlier = next((first_seen[k] for k in keys if k in first_seen), None)
+        if earlier is not None:
+            entries.append(SessionEntry(server, "duplicate", message=f"same server as {earlier}"))
+            continue
+        first_seen.update(dict.fromkeys(keys, label))
+        if target.kind is TargetKind.STDIO and not allow_exec:
+            entries.append(
+                SessionEntry(server, "skipped", message="stdio server; pass --allow-exec to run it")
+            )
+            continue
+        started_at = clock()
+        try:
+            if target.kind is TargetKind.STDIO:
+                loaded = load_stdio(target.location, target.args, allow_exec=True, env=server.env)
+            else:
+                loaded = load_http(target.location, transport=server.transport)
+            outcome = scan_loaded(
+                loaded, rules=pack, analyzers=analyzers, clock=clock, started_at=started_at, llm=llm
+            )
+        except (LoaderError, ScanError) as exc:
+            entries.append(SessionEntry(server, "failed", message=str(exc)))
+            continue
+        entries.append(SessionEntry(server, "scanned", scan=outcome))
+    session = ScanSession(results=tuple(e.scan.result for e in entries if e.scan is not None))
+    return SessionScan(session=session, entries=tuple(entries))
