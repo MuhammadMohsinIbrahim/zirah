@@ -223,7 +223,9 @@ def test_twenty_low_findings_do_not_outweigh_one_critical() -> None:
 def test_locations_decay_heaviest_first() -> None:
     findings = spread((L, HI), (C, MED), (M, HI))
     result = score(findings)
-    assert [d.decay for d in result.deductions] == [1.0, LOCATION_DECAY, LOCATION_DECAY**2]
+    assert [d.decay for d in result.deductions] == pytest.approx(
+        [1.0, LOCATION_DECAY, LOCATION_DECAY**2]
+    )
     assert [d.weight for d in result.deductions] == [30.0, 8.0, 3.0]
 
 

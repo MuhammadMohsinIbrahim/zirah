@@ -113,6 +113,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* an MCP client test calls the tool and gets a trust score and findings.
 - [ ] **0.2.11 GitHub Action** `[—]`: `action/` runs `zirah scan` in a repo and uploads SARIF to code scanning.
   *Done when:* a demo repo shows Zirah alerts in its Security tab.
+  *Note:* compute SARIF line/column for static JSON targets from the source file (results only carry JSON Pointers today).
 - [ ] **0.2.12 Release 0.2.0** `[—]`: CodeQL workflow, Docker image to GHCR, README update, CHANGELOG, "Current focus" update.
   *Done when:* 0.2.0 is on PyPI and GHCR and the Action is tagged `v0`.
 

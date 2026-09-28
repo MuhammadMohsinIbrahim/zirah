@@ -69,7 +69,7 @@ def test_json_format_is_the_scan_result_contract() -> None:
     assert code == EXIT_CLEAN
     result = ScanResult.model_validate_json(out)
     assert result.grade == "F"
-    assert json.loads(out)["schema_version"] == "0.1"
+    assert json.loads(out)["schema_version"] == "0.2"
 
 
 @pytest.mark.parametrize("fmt", ["json", "terminal"])
@@ -188,3 +188,32 @@ def test_non_utf8_console_gets_escapes_instead_of_crashing(
     stream.write(chr(0x4E2D))
     stream.flush()
     assert raw.getvalue() == b"\\" + b"u4e2d"
+
+
+def test_default_fail_on_is_high(tmp_path: Path) -> None:
+    medium_only = tmp_path / "m.json"
+    medium_only.write_text(
+        json.dumps({"tools": [{"name": "t", "description": "Adds.<!-- build 42 -->"}]}),
+        encoding="utf-8",
+    )
+    code, out, _ = invoke("scan", str(medium_only))
+    assert "MEDIUM" in out
+    assert code == EXIT_CLEAN
+    assert invoke("scan", str(medium_only), "--fail-on", "info")[0] == EXIT_FINDINGS
+    assert invoke("scan", D2)[0] == EXIT_FINDINGS  # high findings
+
+
+def test_json_breakdown_points_match_sarif() -> None:
+    _, out, _ = invoke("scan", D4, "--format", "json")
+    result = ScanResult.model_validate_json(out)
+    assert result.score_breakdown is not None
+    json_points = {d.finding_id: d.points for d in result.score_breakdown.deductions}
+    assert set(json_points) == {f.id for f in result.findings}
+    _, sarif_out, _ = invoke("scan", D4, "--format", "sarif")
+    sarif_points = {
+        r["fingerprints"]["zirahFindingId/v1"]: r["properties"]["points"]
+        for r in json.loads(sarif_out)["runs"][0]["results"]
+    }
+    assert sarif_points == json_points
+    assert result.score_breakdown.deducted_points == 150
+    assert result.trust_score == 0

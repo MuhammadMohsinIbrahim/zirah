@@ -24,7 +24,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Final
 
-from zirah.models import Confidence, Finding, Grade, Severity
+from zirah.models import (
+    Confidence,
+    Finding,
+    Grade,
+    ScoreBreakdown,
+    ScoreCap,
+    ScoreDeduction,
+    Severity,
+)
 
 MAX_SCORE: Final = 100
 """The score of a target with no findings."""
@@ -89,42 +97,19 @@ uses for that severity (critical 9.0+, high 7.0-8.9, medium 4.0-6.9, low 0.1-3.9
 POINTS_DECIMALS: Final = 2
 """Decimal places kept for each finding's points."""
 
-
-@dataclass(frozen=True, slots=True)
-class Deduction:
-    """What one finding cost: ``points = weight * share * decay``."""
-
-    finding_id: str
-    rule_id: str
-    location: str
-    weight: float
-    """Severity weight times confidence multiplier."""
-    share: float
-    """1 for the heaviest finding at its location, ``SAME_LOCATION_SHARE`` for the others."""
-    decay: float
-    """``LOCATION_DECAY ** rank`` of the finding's location."""
-    points: float
-
-
-@dataclass(frozen=True, slots=True)
-class AppliedCap:
-    """A cap that lowered the score, and the findings that triggered it."""
-
-    limit: int
-    severity: Severity
-    confidence: Confidence
-    finding_ids: tuple[str, ...]
+DECAY_DECIMALS: Final = 6
+"""Decimal places kept for each location's decay factor."""
 
 
 @dataclass(frozen=True, slots=True)
 class Score:
     trust_score: int
     grade: Grade
-    deductions: tuple[Deduction, ...]
+    deductions: tuple[ScoreDeduction, ...]
     """One entry per finding, ordered by location rank, then by weight within a location."""
     uncapped_score: int
     """``MAX_SCORE`` minus the rounded-up deductions, before any cap."""
-    cap: AppliedCap | None = None
+    cap: ScoreCap | None = None
 
     @property
     def total_points(self) -> float:
@@ -134,6 +119,17 @@ class Score:
     def deducted_points(self) -> int:
         """``total_points`` rounded up: what is actually taken from ``MAX_SCORE``."""
         return math.ceil(self.total_points)
+
+    @property
+    def breakdown(self) -> ScoreBreakdown:
+        """The breakdown as recorded in ``ScanResult.score_breakdown``."""
+        return ScoreBreakdown(
+            deductions=self.deductions,
+            total_points=self.total_points,
+            deducted_points=self.deducted_points,
+            uncapped_score=self.uncapped_score,
+            cap=self.cap,
+        )
 
     def points_for(self, finding_id: str) -> float:
         """Points deducted for one finding (0 when it is not in this score)."""
@@ -165,14 +161,14 @@ def score(findings: Sequence[Finding]) -> Score:
 
     ranked = sorted(by_location.items(), key=lambda item: (-location_weight(item[1]), item[0]))
 
-    deductions: list[Deduction] = []
+    deductions: list[ScoreDeduction] = []
     for rank, (location, group) in enumerate(ranked):
-        decay = LOCATION_DECAY**rank
+        decay = round(LOCATION_DECAY**rank, DECAY_DECIMALS)
         for index, finding in enumerate(group):
             weight = finding_weight(finding)
             share = 1.0 if index == 0 else SAME_LOCATION_SHARE
             deductions.append(
-                Deduction(
+                ScoreDeduction(
                     finding_id=finding.id,
                     rule_id=finding.rule_id,
                     location=location,
@@ -186,7 +182,7 @@ def score(findings: Sequence[Finding]) -> Score:
     total = round(sum(d.points for d in deductions), POINTS_DECIMALS)
     uncapped = max(0, MAX_SCORE - math.ceil(total))
 
-    cap: AppliedCap | None = None
+    cap: ScoreCap | None = None
     for rule in CAPS:
         triggers = tuple(
             f.id
@@ -194,7 +190,12 @@ def score(findings: Sequence[Finding]) -> Score:
             if f.severity is rule.severity and f.confidence is rule.confidence
         )
         if triggers and uncapped > rule.limit and (cap is None or rule.limit < cap.limit):
-            cap = AppliedCap(rule.limit, rule.severity, rule.confidence, triggers)
+            cap = ScoreCap(
+                limit=rule.limit,
+                severity=rule.severity,
+                confidence=rule.confidence,
+                finding_ids=triggers,
+            )
 
     trust_score = min(uncapped, cap.limit) if cap else uncapped
     return Score(

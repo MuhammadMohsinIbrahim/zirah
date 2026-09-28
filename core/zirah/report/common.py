@@ -210,7 +210,7 @@ def score_formula(score: Score) -> str:
         f"= {score.uncapped_score}"
     )
     if score.deducted_points > MAX_SCORE:
-        text += " (a score cannot go below 0)"
+        text += " (floored at 0)"
     if score.cap:
         text += f", capped at {score.cap.limit}"
     return text

@@ -486,3 +486,66 @@ def test_scan_session_allows_distinct_targets(other: Target) -> None:
 def test_target_identity_ignores_name() -> None:
     assert stdio_target("a").identity == stdio_target("b").identity
     assert stdio_target("a") != stdio_target("b")
+
+
+# --- Score breakdown (schema 0.2) --------------------------------------------------------
+
+
+def _scored(*findings: Finding) -> dict[str, Any]:
+    from zirah.scoring import score
+
+    scored = score(findings)
+    return {
+        "findings": findings,
+        "trust_score": scored.trust_score,
+        "grade": scored.grade,
+        "score_breakdown": scored.breakdown,
+    }
+
+
+def test_schema_version_is_0_2_and_old_results_are_rejected() -> None:
+    assert SCHEMA_VERSION == "0.2"
+    with pytest.raises(ValidationError):
+        make_result(schema_version="0.1")
+
+
+def test_score_breakdown_is_optional_and_round_trips() -> None:
+    assert make_result().score_breakdown is None
+    other = make_finding(
+        severity=Severity.LOW, evidence=Evidence(location="/tools/1/description", snippet="x")
+    )
+    result = make_result(**_scored(make_finding(), other))
+    breakdown = result.score_breakdown
+    assert breakdown is not None
+    assert [d.finding_id for d in breakdown.deductions] == [f.id for f in result.findings]
+    assert breakdown.cap is not None
+    assert breakdown.cap.limit == 74
+    assert ScanResult.model_validate_json(result.model_dump_json()) == result
+
+
+def test_score_breakdown_needs_one_deduction_per_finding() -> None:
+    fields = _scored(make_finding())
+    fields["findings"] = (
+        make_finding(),
+        make_finding(evidence=Evidence(location="/x", snippet="y")),
+    )
+    with pytest.raises(ValidationError, match="exactly one deduction per finding"):
+        make_result(**fields)
+
+
+def test_score_breakdown_cap_must_name_known_findings() -> None:
+    fields = _scored(make_finding())
+    breakdown = fields["score_breakdown"]
+    assert breakdown.cap is not None
+    fields["score_breakdown"] = breakdown.model_copy(
+        update={"cap": breakdown.cap.model_copy(update={"finding_ids": ("0" * 16,)})}
+    )
+    with pytest.raises(ValidationError, match="cap names findings"):
+        make_result(**fields)
+
+
+def test_score_breakdown_must_match_trust_score() -> None:
+    fields = _scored(make_finding())
+    fields["trust_score"] = 80
+    with pytest.raises(ValidationError, match="does not match score_breakdown"):
+        make_result(**fields)
