@@ -72,6 +72,7 @@ def main() -> None:
     parser.add_argument("--bad-cursor", action="store_true")
     parser.add_argument("--no-result", action="store_true")
     parser.add_argument("--token")  # accepted and ignored: lets tests pass a fake secret
+    parser.add_argument("--echo-env")  # report whether this env variable was set
     opts = parser.parse_args()
 
     if opts.child:
@@ -86,6 +87,10 @@ def main() -> None:
         sys.stdout.flush()
 
     all_tools = tools(opts.tools)
+    instructions = INSTRUCTIONS
+    if opts.echo_env:
+        state = "set" if os.environ.get(opts.echo_env) else "unset"
+        instructions += f" {opts.echo_env} is {state}."
     for line in sys.stdin:
         if opts.hang:
             continue
@@ -120,7 +125,7 @@ def main() -> None:
             result = {
                 "supportedVersions": [MODERN],
                 "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
-                "instructions": INSTRUCTIONS,
+                "instructions": instructions,
                 "_meta": {SERVER_INFO_META: SERVER_INFO},
             }
         elif method == "initialize":
@@ -142,7 +147,7 @@ def main() -> None:
                 "protocolVersion": opts.version,
                 "capabilities": {"tools": {}, "prompts": {}, "resources": {}},
                 "serverInfo": SERVER_INFO,
-                "instructions": INSTRUCTIONS,
+                "instructions": instructions,
             }
         elif opts.era == "modern" and (params.get("_meta") or {}).get(PROTOCOL_META) != MODERN:
             send(

@@ -73,12 +73,23 @@ class DiscoveredServer(BaseModel):
     approved: bool | None = None
     """``None`` when there is no approved list."""
     env: dict[str, str] = Field(default_factory=dict, exclude=True, repr=False)
+    raw_args: tuple[str, ...] = Field(default=(), exclude=True, repr=False)
+    """The arguments as configured (``args`` is the redacted copy for display)."""
+    raw_url: str | None = Field(default=None, exclude=True, repr=False)
+    """The URL as configured (``url`` is the redacted copy for display)."""
 
     def target(self) -> Target:
+        """The target to scan, with the configured (unredacted) URL or arguments. Scan
+        results redact it again before anything is shown."""
         if self.kind == "http":
-            return Target(kind=TargetKind.HTTP, location=self.url or "?", name=self.name)
+            return Target(
+                kind=TargetKind.HTTP, location=self.raw_url or self.url or "?", name=self.name
+            )
         return Target(
-            kind=TargetKind.STDIO, location=self.command or "?", args=self.args, name=self.name
+            kind=TargetKind.STDIO,
+            location=self.command or "?",
+            args=self.raw_args or self.args,
+            name=self.name,
         )
 
     @property
@@ -278,15 +289,19 @@ def _server(
         elif declared in ("http", "streamable-http", "streamablehttp"):
             transport = "streamable-http"
         target = redact_target(Target(kind=TargetKind.HTTP, location=url), secret_rules)
-        return DiscoveredServer(kind="http", url=target.location, transport=transport, **common)
+        return DiscoveredServer(
+            kind="http", url=target.location, raw_url=url, transport=transport, **common
+        )
     if isinstance(command, str) and command:
         raw_args = raw.get("args")
         args: list[Any] = raw_args if isinstance(raw_args, list) else []
+        configured = tuple(str(a) for a in args)
         target = redact_target(
-            Target(kind=TargetKind.STDIO, location=command, args=tuple(str(a) for a in args)),
-            secret_rules,
+            Target(kind=TargetKind.STDIO, location=command, args=configured), secret_rules
         )
-        return DiscoveredServer(kind="stdio", command=target.location, args=target.args, **common)
+        return DiscoveredServer(
+            kind="stdio", command=target.location, args=target.args, raw_args=configured, **common
+        )
     warnings.append(f"{where}: no command or url, skipped")
     return None
 

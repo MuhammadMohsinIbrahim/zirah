@@ -74,7 +74,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
 ### Discovery & multi-target
 - [x] **0.1.23 D14 discover** `[D14]`: parse MCP configs for Claude Desktop, Claude Code, Cursor, VS Code and Windsurf (Windows/macOS/Linux paths); list servers; flag servers missing from the user's approved list (`~/.config/zirah/approved.yaml`). No upload path exists.
   *Done when:* fixture configs for all 5 clients parse, secrets in configs are redacted in output, and no network access happens in `discover` (asserted in a test).
-- [ ] **0.1.24 `scan --all` → ScanSession** `[—]`: scan every discovered or listed server; stdio servers are skipped with a notice unless `--allow-exec` is given.
+- [x] **0.1.24 `scan --all` → ScanSession** `[—]`: scan every discovered or listed server; stdio servers are skipped with a notice unless `--allow-exec` is given.
   *Done when:* a multi-target run produces one ScanSession JSON and one summary table.
 
 ### Release

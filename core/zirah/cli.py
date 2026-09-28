@@ -15,21 +15,22 @@ import sys
 from collections.abc import Callable
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NoReturn
 
 import typer
 from rich.console import Console
 
 from zirah import __version__
 from zirah.discover import discover
-from zirah.llm import LlmError, resolve
+from zirah.llm import LlmClient, LlmError, resolve
 from zirah.loaders import LoaderError
 from zirah.loaders.stdio import EXEC_WARNING
 from zirah.models import Severity, TargetKind
 from zirah.report import discover as discover_report
 from zirah.report import json as json_report
 from zirah.report import markdown, sarif, terminal
-from zirah.scan import Scan, ScanError, scan, target_kind
+from zirah.report import session as session_report
+from zirah.scan import Scan, ScanError, scan, scan_all, target_kind
 
 EXIT_CLEAN = 0
 EXIT_FINDINGS = 1
@@ -87,12 +88,12 @@ def main(
 @app.command("scan")
 def scan_command(
     target: Annotated[
-        str,
+        str | None,
         typer.Argument(
             help="Manifest JSON file, server URL, or stdio server command (needs --allow-exec).",
             show_default=False,
         ),
-    ],
+    ] = None,
     args: Annotated[
         list[str] | None,
         typer.Argument(
@@ -136,16 +137,37 @@ def scan_command(
             help="Run a stdio server on this machine to read its manifest (no isolation).",
         ),
     ] = False,
+    every: Annotated[
+        bool,
+        typer.Option(
+            "--all",
+            help="Scan every server found by 'zirah discover' into one session "
+            "(stdio servers only with --allow-exec).",
+        ),
+    ] = False,
 ) -> None:
     """Scan a target and print a report with its grade, trust score and findings.
 
     Exit codes: 0 no findings at or above --fail-on, 1 findings at or above --fail-on,
-    2 usage, load or scan error.
+    2 usage, load or scan error. With --all, 2 also means a scan was incomplete or nothing
+    could be scanned; a single server that cannot be reached is reported, not fatal.
     """
     _safe_stdout()
     stderr = Console(stderr=True, highlight=False, soft_wrap=True)
+    if every == (target is not None):
+        message = (
+            "pass either a TARGET or --all, not both" if every else "missing TARGET (or --all)"
+        )
+        stderr.print(f"error: {message}", markup=False)
+        raise typer.Exit(EXIT_ERROR)
     try:
         client = resolve(llm)
+    except LlmError as exc:
+        stderr.print(f"error: {exc}", markup=False)
+        raise typer.Exit(EXIT_ERROR) from None
+    if target is None:
+        _scan_every(output_format, output, fail_on, client, allow_exec, stderr)
+    try:
         server_args = tuple(args or ())
         if allow_exec and target_kind(target, server_args) is TargetKind.STDIO:
             stderr.print(f"Warning: {EXEC_WARNING}", style="bold red", markup=False)
@@ -208,6 +230,51 @@ def discover_command(
     else:
         discover_report.print_report(found, Console(highlight=False))
     raise typer.Exit(EXIT_FINDINGS if found.unapproved else EXIT_CLEAN)
+
+
+def _scan_every(
+    output_format: OutputFormat,
+    output: Path | None,
+    fail_on: FailOn,
+    client: LlmClient | None,
+    allow_exec: bool,
+    stderr: Console,
+) -> NoReturn:
+    """``scan --all``: every discovered server into one ``ScanSession``."""
+    if output_format not in (OutputFormat.TERMINAL, OutputFormat.JSON):
+        stderr.print("error: --all supports --format terminal or json", markup=False)
+        raise typer.Exit(EXIT_ERROR)
+    found = discover(cwd=Path.cwd())
+    if allow_exec and any(server.kind == "stdio" for server in found.servers):
+        stderr.print(f"Warning: {EXEC_WARNING}", style="bold red", markup=False)
+    run = scan_all(found.servers, allow_exec=allow_exec, llm=client)
+
+    if output_format is OutputFormat.JSON:
+        text = session_report.render_json(run)
+    elif output is not None:
+        text = session_report.plain_text(run)
+    if output is None and output_format is OutputFormat.TERMINAL:
+        session_report.print_report(run, Console(highlight=False))
+    elif output is None:
+        sys.stdout.write(text)
+    else:
+        try:
+            output.write_text(text, encoding="utf-8", newline="\n")
+        except OSError as exc:
+            stderr.print(f"error: cannot write {output}: {exc.strerror}", markup=False)
+            raise typer.Exit(EXIT_ERROR) from None
+        stderr.print(f"{output_format} session report written to {output}", markup=False)
+
+    skipped = sum(entry.status == "skipped" for entry in run.entries)
+    if skipped:
+        stderr.print(
+            f"note: {skipped} stdio server(s) skipped; pass --allow-exec to run them", markup=False
+        )
+    codes = [exit_code(scan, fail_on) for scan in run.scans]
+    failed = any(entry.status == "failed" for entry in run.entries)
+    if EXIT_ERROR in codes or (failed and not codes):
+        raise typer.Exit(EXIT_ERROR)
+    raise typer.Exit(EXIT_FINDINGS if EXIT_FINDINGS in codes else EXIT_CLEAN)
 
 
 def exit_code(outcome: Scan, fail_on: FailOn) -> int:
