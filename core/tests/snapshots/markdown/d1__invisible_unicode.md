@@ -96,6 +96,6 @@ Each finding's weight is its severity weight times its confidence multiplier. At
 | `3397745fd5e6d414` | `D1-JOINER-OUT-OF-CONTEXT` | `/tools/1/input_schema/properties/mode/default` | 6 | 1 | 0.21 | 1.26 |
 | | | | | | **Total** | **74.98** |
 
-Trust score: 100 - 74.98 points, rounded up = 25.
+Trust score: 100 - 75 points (deductions rounded up) = 25.
 
 </details>

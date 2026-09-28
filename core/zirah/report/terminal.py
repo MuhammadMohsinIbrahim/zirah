@@ -18,6 +18,7 @@ from rich.text import Text
 from zirah.models import Grade, Severity
 from zirah.report.common import (
     GRADE_MEANING,
+    SAME_TEXT,
     LocationGroup,
     cap_explanation,
     describe_location,
@@ -25,6 +26,7 @@ from zirah.report.common import (
     escape_text,
     group_by_location,
     one_line,
+    score_formula,
     severity_counts,
 )
 from zirah.scan import Scan
@@ -93,7 +95,8 @@ def _header(scan: Scan) -> RenderableType:
     lines.append(f" Grade {result.grade} ", style=GRADE_STYLE[result.grade])
     lines.append("  Trust score ", style="bold")
     lines.append(f"{result.trust_score}/100\n", style="bold")
-    lines.append(GRADE_MEANING[result.grade] + "\n")
+    if result.findings:
+        lines.append(GRADE_MEANING[result.grade] + "\n")
 
     cap = cap_explanation(scan.score)
     if cap:
@@ -126,16 +129,18 @@ def _location(scan: Scan, group: LocationGroup) -> RenderableType:
     rows = Table.grid(padding=(0, 2))
     rows.add_column(width=8, no_wrap=True)
     rows.add_column(ratio=1)
-    shown: set[str] = set()
+    previous: str | None = None
     for finding in group.findings:
         body = Text()
         body.append(escape_text(finding.title) + "\n", style="bold")
         points = scan.score.points_for(finding.id)
         body.append(f"{finding.rule_id} · -{points:g} pts\n", style="dim")
         snippet = display_snippet(finding)
-        if snippet not in shown:  # rules matching the same text show it once
-            shown.add(snippet)
+        if snippet == previous:  # rules matching the same text show it once
+            body.append(SAME_TEXT + "\n", style="dim")
+        else:
             body.append(snippet + "\n", style="italic")
+        previous = snippet
         body.append("Fix: ", style="green")
         body.append(one_line(escape_text(finding.remediation)))
         rows.add_row(Text(finding.severity.upper(), style=SEVERITY_STYLE[finding.severity]), body)
@@ -148,9 +153,7 @@ def _footer(scan: Scan) -> RenderableType:
     text = Text(style="dim")
     if result.findings:
         text.append(
-            f"Score: 100 - {scan.score.total_points:g} points (rounded up)"
-            + (f", capped at {scan.score.cap.limit}" if scan.score.cap else "")
-            + ". Findings at one location count mostly once.\n"
+            f"Score: {score_formula(scan.score)}. Findings at one location count mostly once.\n"
         )
     text.append(
         f"Rule pack {result.rulepack_version} · engines: {engines} · zirah {result.zirah_version}"

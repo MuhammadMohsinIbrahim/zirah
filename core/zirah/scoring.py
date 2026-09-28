@@ -130,6 +130,11 @@ class Score:
     def total_points(self) -> float:
         return round(sum(d.points for d in self.deductions), POINTS_DECIMALS)
 
+    @property
+    def deducted_points(self) -> int:
+        """``total_points`` rounded up: what is actually taken from ``MAX_SCORE``."""
+        return math.ceil(self.total_points)
+
     def points_for(self, finding_id: str) -> float:
         """Points deducted for one finding (0 when it is not in this score)."""
         return next((d.points for d in self.deductions if d.finding_id == finding_id), 0.0)

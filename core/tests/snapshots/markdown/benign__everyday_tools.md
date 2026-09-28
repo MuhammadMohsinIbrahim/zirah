@@ -1,6 +1,6 @@
 ## Zirah scan: grade A, trust score 100/100
 
-No significant findings.
+No findings.
 
 | | |
 |---|---|
