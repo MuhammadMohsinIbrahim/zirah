@@ -173,10 +173,14 @@ def test_default_runs_every_discovered_analyzer() -> None:
 
 
 @pytest.mark.parametrize(
-    "target", ["https://example.invalid/mcp", "http://localhost:8000/sse", "npm://pkg"]
+    ("target", "message"),
+    [
+        ("npm://pkg", "expected an http"),
+        ("http://127.0.0.1:9/mcp", "cannot connect"),  # discard port: nothing listens
+    ],
 )
-def test_remote_targets_are_refused_with_a_readable_error(target: str) -> None:
-    with pytest.raises(LoaderError, match="remote targets are not supported yet"):
+def test_bad_or_unreachable_urls_give_a_readable_error(target: str, message: str) -> None:
+    with pytest.raises(LoaderError, match=message):
         load_target(target)
 
 

@@ -18,6 +18,7 @@ zirah scan server.json --format sarif -o zirah.sarif   # GitHub code scanning
 zirah scan server.json --format markdown -o report.md # PR comments, READMEs
 zirah scan server.json --fail-on medium         # CI: also fail on medium findings (default: high)
 zirah scan server.json --llm ollama:llama3.1:8b  # optional LLM judge (local); also openai, anthropic
+zirah scan https://mcp.example.com/mcp          # remote server (Streamable HTTP or SSE)
 zirah scan --allow-exec npx -y some-mcp-server  # run a stdio server (no isolation!)
 ```
 

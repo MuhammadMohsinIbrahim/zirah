@@ -123,7 +123,8 @@ def test_manifest_text_cannot_inject_markup_or_escapes(tmp_path: Path) -> None:
     ("args", "message"),
     [
         (["scan", "missing.json"], "file not found"),
-        (["scan", "https://example.invalid/mcp"], "remote targets are not supported yet"),
+        (["scan", "ftp://example.invalid/mcp"], "expected an http(s) URL"),
+        (["scan", "https://example.invalid/mcp", "x"], "extra arguments only apply"),
     ],
 )
 def test_load_errors_exit_2(args: list[str], message: str) -> None:
