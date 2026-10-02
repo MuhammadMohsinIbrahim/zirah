@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from zirah import __version__
 from zirah.report import terminal
 from zirah.scan import Scan, scan
 
@@ -60,7 +61,7 @@ def test_no_findings() -> None:
     assert text.count("No findings.") == 1
     assert "No significant findings." not in text
     assert "Score:" not in text
-    assert text.rstrip().endswith("zirah 0.1.0.dev0")
+    assert text.rstrip().endswith(f"zirah {__version__}")
 
 
 def test_score_below_zero_says_it_is_floored() -> None:

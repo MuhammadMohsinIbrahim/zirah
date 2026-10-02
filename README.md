@@ -3,6 +3,7 @@
 **Find tool poisoning, prompt injection, tool shadowing and leaked secrets in MCP servers before your agent trusts them. Offline, no account, every finding explained.**
 
 [![CI](https://github.com/MuhammadMohsinIbrahim/zirah/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadMohsinIbrahim/zirah/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/zirah)](https://pypi.org/project/zirah/)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776ab)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 

@@ -1239,7 +1239,6 @@ wheels = [
 
 [[package]]
 name = "zirah"
-version = "0.1.0.dev0"
 source = { editable = "core" }
 dependencies = [
     { name = "httpx" },

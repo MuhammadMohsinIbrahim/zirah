@@ -9,4 +9,4 @@ No findings.
 | Findings | none |
 | Rule pack | 2026.10.1 |
 | Engines | static |
-| Zirah | 0.1.0.dev0 |
+| Zirah | 0.1.0 |
