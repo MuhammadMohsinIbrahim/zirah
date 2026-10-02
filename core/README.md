@@ -8,6 +8,9 @@ trust score from 0 to 100. Each finding carries the exact location (a JSON point
 evidence, an [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/) mapping and a fix.
 It works fully offline; an LLM judge is optional.
 
+Zirah is a scanner today. A public trust registry with signed attestations and version
+history is on the [roadmap](https://github.com/MuhammadMohsinIbrahim/zirah-mcp#roadmap) (v0.3).
+
 ![Zirah scanning a benign and a malicious demo MCP server](https://raw.githubusercontent.com/MuhammadMohsinIbrahim/zirah-mcp/main/docs/demo.gif)
 
 ## Install
