@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for reporting. **Security problems in Zirah itself** (code running without
         `--allow-exec`, unredacted secrets in output, terminal injection) must not be filed
-        here: see [SECURITY.md](https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/SECURITY.md).
+        here: see [SECURITY.md](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/SECURITY.md).
         Wrong findings on a benign server are **false positives**; use that form instead.
   - type: input
     id: version

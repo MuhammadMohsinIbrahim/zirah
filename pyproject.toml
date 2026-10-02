@@ -3,7 +3,7 @@
 name = "zirah-workspace"
 version = "0"
 requires-python = ">=3.12"
-dependencies = ["zirah"]
+dependencies = ["zirah-mcp"]
 
 [tool.uv]
 package = false
@@ -12,7 +12,7 @@ package = false
 members = ["core"]
 
 [tool.uv.sources]
-zirah = { workspace = true }
+zirah-mcp = { workspace = true }
 
 [dependency-groups]
 dev = [

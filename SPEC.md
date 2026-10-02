@@ -1,6 +1,6 @@
 # Zirah — Project Spec (v2)
 
-> Renamed from "MCP Sentinel" (already used by 5+ GitHub repos and by Microsoft Sentinel's MCP server). Zirah (زرہ) means armor. The name "zirah" is free on PyPI (checked Sept 2026). No placeholder upload: the real 0.1.0 is published when v0.1 ships.
+> Renamed from "MCP Sentinel" (already used by 5+ GitHub repos and by Microsoft Sentinel's MCP server). Zirah (زرہ) means armor. The PyPI distribution is `zirah-mcp` (free on PyPI, checked Oct 2026); the import package and the command stay `zirah`. No placeholder upload: the real 0.1.0 is published when v0.1 ships.
 >
 > **v2 changes:** applies the architecture review (Sept 2026): loaders and execution modes per release, two verification levels, attestation trust model, registry abuse policy, `trust_score` replaces the risk score, multi-target `ScanSession`, and a six-release roadmap. Build progress is tracked in `docs/PLAN.md`.
 
@@ -64,7 +64,7 @@ Decision: **use Python for all backend code, not NestJS + FastAPI.** Two backend
 
 ```
 zirah/                      (monorepo)
-├── core/                    Python package → PyPI `zirah` (the heart)
+├── core/                    Python package → PyPI `zirah-mcp` (the heart)
 │   ├── zirah/
 │   │   ├── models.py        Target, Manifest, Finding, ScanResult, ScanSession (pydantic)
 │   │   ├── loaders/         v0.1: stdio / streamable-http / sse / static JSON
@@ -164,7 +164,7 @@ Git, npm and PyPI loaders only download source and metadata; they never run inst
 
 ### 4.7 Similarity to known-bad descriptions
 
-- **v0.2 (offline CLI):** a bundled known-bad corpus with lexical similarity (rapidfuzz / MinHash). Optional local embeddings via the `zirah[embed]` extra.
+- **v0.2 (offline CLI):** a bundled known-bad corpus with lexical similarity (rapidfuzz / MinHash). Optional local embeddings via the `zirah-mcp[embed]` extra.
 - **v0.3 (registry):** pgvector similarity in Postgres.
 
 ### 4.8 MCP server mode
@@ -186,7 +186,7 @@ The old prototype is **not ported**. Rules and prompts are written fresh from th
 | Release | Scope | Target |
 |---|---|---|
 | **v0.1 — CLI core** | Models, loaders (stdio with `--allow-exec`, streamable-http, sse, static JSON), D1–D4 single-manifest, D14 discover, `scan --all` → ScanSession, scoring, rule packs, LLM judge (ollama/openai/anthropic/none), terminal/JSON/SARIF/markdown reports, 60%+ coverage, README with GIF, publish 0.1.0 to PyPI | Weeks 1–3 |
-| **v0.2 — Deep static** | Git/npm/PyPI loaders (source only), D5 (Semgrep), D6-static, D7 (OSV + npm/PyPI metadata), `--docker` runner, bundled similarity corpus (+ `zirah[embed]`), MCP server mode (local), GitHub Action + SARIF upload. **Minimum portfolio-ready release.** | Weeks 4–7 |
+| **v0.2 — Deep static** | Git/npm/PyPI loaders (source only), D5 (Semgrep), D6-static, D7 (OSV + npm/PyPI metadata), `--docker` runner, bundled similarity corpus (+ `zirah-mcp[embed]`), MCP server mode (local), GitHub Action + SARIF upload. **Minimum portfolio-ready release.** | Weeks 4–7 |
 | **v0.3 — Registry** | FastAPI + Postgres/pgvector + arq, registry-side scanning of public identifiers, Ed25519 attestations + key endpoint, hash-chained log, D10 drift, `zirah verify`, registry lookup in MCP mode, DISPUTES.md, basic Next.js registry pages | Weeks 8–11 |
 | **v0.4 — Sandbox** | Detonation sandbox with canaries + mitmproxy, D8, D9, D6-dynamic | Weeks 12–14 |
 | **v0.5 — Graph & proof** | `graph` stage over ScanSession, D3 cross-server, D11, D12, D13, attack-graph UI, bench harness + published metrics badge | Weeks 15–18 |
@@ -199,7 +199,7 @@ Ship v0.1 publicly as soon as it works. An early release that works beats a late
 - Apache-2.0 license, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue/PR templates
 - CI: ruff, mypy, pytest, coverage badge, bench-metrics badge, CodeQL, Dependabot
 - Releases through GitHub Actions → PyPI (trusted publishing), Docker image to GHCR
-- README: 30-second GIF, one-command install (`pipx install zirah`), comparison table, OWASP mapping, architecture diagram
+- README: 30-second GIF, one-command install (`pipx install zirah-mcp`), comparison table, OWASP mapping, architecture diagram
 - `examples/`: a deliberately malicious demo MCP server that people can scan themselves
 - Conventional commits, semantic versioning, CHANGELOG
 

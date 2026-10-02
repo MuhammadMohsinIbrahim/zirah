@@ -12,7 +12,7 @@ Ordered checklist from v0.1 to v0.6, derived from `SPEC.md` (the source of truth
 
 ## v0.1 — CLI core (weeks 1–3)
 
-Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offline and prints an explainable trust score.
+Goal: `pipx install zirah-mcp && zirah scan server.json` finds D1–D4 issues offline and prints an explainable trust score.
 
 ### Foundation
 - [x] **0.1.1 Monorepo skeleton** `[—]`: uv workspace (root + `core/`), ruff, mypy strict, pytest with a coverage floor, LICENSE, README stub, `.env.example`, `.gitignore`, `.gitattributes`, `.python-version`.
@@ -82,10 +82,10 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* the README commands against the examples produce the documented findings.
 - [x] **0.1.26 Repo hygiene** `[—]`: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue/PR templates, CHANGELOG.
   *Done when:* the files are present and linked from the README.
-- [x] **0.1.27 README** `[—]`: 30-second GIF, `pipx install zirah`, quickstart, comparison table, OWASP mapping, architecture diagram, `--allow-exec` safety note.
+- [x] **0.1.27 README** `[—]`: 30-second GIF, `pipx install zirah-mcp`, quickstart, comparison table, OWASP mapping, architecture diagram, `--allow-exec` safety note.
   *Done when:* a new user can go from install to their first report using only the README.
 - [ ] **0.1.28 Release 0.1.0** `[—]`: PyPI trusted publishing workflow on tag.
-  *Done when:* `pipx install zirah==0.1.0` works on a clean machine.
+  *Done when:* `pipx install zirah-mcp==0.1.0` works on a clean machine.
 
 ---
 
@@ -107,7 +107,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* each signal has malicious and benign fixtures.
 - [ ] **0.2.8 `--docker` runner** `[—]`: run stdio servers in a container with no host mounts, a read-only fs and resource limits, for manifest extraction only.
   *Done when:* the demo stdio server scans via `--docker` and a test proves the host filesystem is not visible.
-- [ ] **0.2.9 Bundled similarity** `[D1][D2]`: a known-bad description corpus shipped with the package, lexical similarity via rapidfuzz/MinHash, and an optional `zirah[embed]` extra for local embeddings.
+- [ ] **0.2.9 Bundled similarity** `[D1][D2]`: a known-bad description corpus shipped with the package, lexical similarity via rapidfuzz/MinHash, and an optional `zirah-mcp[embed]` extra for local embeddings.
   *Done when:* near-duplicates of corpus entries are flagged with the matched entry as evidence and the base install has no embedding dependency.
 - [ ] **0.2.10 MCP server mode (local)** `[—]`: `zirah mcp` exposing `check_tool_trust`, which answers from a local scan.
   *Done when:* an MCP client test calls the tool and gets a trust score and findings.

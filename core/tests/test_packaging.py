@@ -13,6 +13,7 @@ from zirah import __version__
 
 CORE = Path(__file__).resolve().parents[1]
 ROOT = CORE.parent
+REPO_URL = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp"
 
 
 @pytest.mark.repo_checkout
@@ -27,6 +28,24 @@ def test_version_has_one_source() -> None:
     assert project["project"]["dynamic"] == ["version"]
     assert project["tool"]["hatch"]["version"]["path"] == "zirah/__init__.py"
     assert re.fullmatch(r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|\.dev\d+)?", __version__)
+
+
+def test_distribution_name_differs_from_the_import_package_and_command() -> None:
+    # PyPI has "zirah-mcp"; what users import and run is still "zirah".
+    pyproject = tomllib.loads((CORE / "pyproject.toml").read_text(encoding="utf-8"))
+    project = pyproject["project"]
+    assert project["name"] == "zirah-mcp"
+    assert project["scripts"] == {"zirah": "zirah.cli:app"}
+    assert pyproject["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"] == ["zirah"]
+    assert set(project["keywords"]) >= {
+        "mcp",
+        "model-context-protocol",
+        "security",
+        "scanner",
+        "prompt-injection",
+        "tool-poisoning",
+    }
+    assert all(url.startswith(REPO_URL) for url in project["urls"].values())
 
 
 def test_pypi_readme_links_are_absolute() -> None:

@@ -12,7 +12,7 @@ Zirah itself go through [SECURITY.md](SECURITY.md), not public issues.
 You need Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone https://github.com/MuhammadMohsinIbrahim/zirah.git
+git clone https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git
 cd zirah
 uv sync
 uv run pytest
@@ -146,7 +146,7 @@ uv run pytest                                        # everything, with coverage
 
 ## Reporting a false positive
 
-Use the [false positive form](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=false_positive.yml).
+Use the [false positive form](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=false_positive.yml).
 Include the rule id, the JSON pointer, the text (with any real secrets removed), and why it
 is legitimate. A false-positive fix comes with a new benign fixture, so it stays fixed.
 

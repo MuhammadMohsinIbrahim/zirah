@@ -53,7 +53,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Build the sdist and wheel
-        run: uv build --package zirah --out-dir dist
+        run: uv build --package zirah-mcp --out-dir dist
 
       - name: Check the wheel contents
         run: |
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/zirah/${{ needs.build.outputs.version }}/
+      url: https://test.pypi.org/project/zirah-mcp/${{ needs.build.outputs.version }}/
     permissions:
       id-token: write
     steps:
@@ -117,13 +117,13 @@ jobs:
         with:
           enable-cache: false
 
-      # Only the zirah wheel comes from TestPyPI; its dependencies come from PyPI, so a
+      # Only the zirah-mcp wheel comes from TestPyPI; its dependencies come from PyPI, so a
       # look-alike package on TestPyPI can never be installed.
       - name: Download the wheel from TestPyPI
         run: |
           for attempt in $(seq 1 20); do
             if uvx pip download --no-deps --only-binary :all: --dest wheel \
-                 --index-url https://test.pypi.org/simple/ "zirah==$VERSION"; then
+                 --index-url https://test.pypi.org/simple/ "zirah-mcp==$VERSION"; then
               exit 0
             fi
             echo "not on the TestPyPI index yet (attempt $attempt); waiting"
@@ -134,7 +134,7 @@ jobs:
       - name: Install it with dependencies from PyPI
         run: |
           uv venv .smoke --python 3.12
-          uv pip install --python .smoke wheel/zirah-*.whl
+          uv pip install --python .smoke wheel/zirah_mcp-*.whl
 
       - name: Smoke-test
         run: |
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi # requires a maintainer's approval
-      url: https://pypi.org/project/zirah/${{ needs.build.outputs.version }}/
+      url: https://pypi.org/project/zirah-mcp/${{ needs.build.outputs.version }}/
     permissions:
       id-token: write
     steps:
@@ -180,12 +180,12 @@ jobs:
         with:
           enable-cache: false
 
-      - name: pipx install zirah==${{ needs.build.outputs.version }}
+      - name: pipx install zirah-mcp==${{ needs.build.outputs.version }}
         run: |
           uv python install 3.12
           python=$(uv python find 3.12)
           for attempt in $(seq 1 20); do
-            if pipx install --python "$python" "zirah==$VERSION"; then
+            if pipx install --python "$python" "zirah-mcp==$VERSION"; then
               exit 0
             fi
             echo "not on the PyPI index yet (attempt $attempt); waiting"

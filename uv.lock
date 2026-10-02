@@ -9,7 +9,7 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "zirah",
+    "zirah-mcp",
     "zirah-workspace",
 ]
 
@@ -1238,7 +1238,7 @@ wheels = [
 ]
 
 [[package]]
-name = "zirah"
+name = "zirah-mcp"
 source = { editable = "core" }
 dependencies = [
     { name = "httpx" },
@@ -1262,7 +1262,7 @@ name = "zirah-workspace"
 version = "0"
 source = { virtual = "." }
 dependencies = [
-    { name = "zirah" },
+    { name = "zirah-mcp" },
 ]
 
 [package.dev-dependencies]
@@ -1277,7 +1277,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "zirah", editable = "core" }]
+requires-dist = [{ name = "zirah-mcp", editable = "core" }]
 
 [package.metadata.requires-dev]
 dev = [
