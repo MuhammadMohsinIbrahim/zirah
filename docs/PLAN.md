@@ -78,7 +78,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* a multi-target run produces one ScanSession JSON and one summary table.
 
 ### Release
-- [ ] **0.1.25 Demo server & examples** `[—]`: `examples/` with a deliberately malicious demo MCP server (static manifest + a stdio version) and a benign one.
+- [x] **0.1.25 Demo server & examples** `[—]`: `examples/` with a deliberately malicious demo MCP server (static manifest + a stdio version) and a benign one.
   *Done when:* the README commands against the examples produce the documented findings.
 - [ ] **0.1.26 Repo hygiene** `[—]`: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue/PR templates, CHANGELOG.
   *Done when:* the files are present and linked from the README.

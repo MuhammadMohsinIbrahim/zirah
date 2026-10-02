@@ -1,0 +1,93 @@
+{
+  "serverInfo": {
+    "name": "zirah-benign-demo",
+    "version": "0.1.0"
+  },
+  "instructions": "A small notes server. Notes are stored locally and never leave this machine.",
+  "tools": [
+    {
+      "name": "add_note",
+      "title": "Add note",
+      "description": "Save a note with a title and body. Returns the new note's id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short title."
+          },
+          "body": {
+            "type": "string",
+            "description": "Note text, markdown allowed."
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ]
+      }
+    },
+    {
+      "name": "search_notes",
+      "title": "Search notes",
+      "description": "Search saved notes by keyword. Use add_note first if there are no notes yet.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "delete_note",
+      "title": "Delete note",
+      "description": "Delete a note by id. Ask the user to confirm before deleting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "weekly_summary",
+      "description": "Summarize this week's notes as a short bulleted list for the user.",
+      "arguments": [
+        {
+          "name": "week",
+          "description": "ISO week, e.g. 2026-W40.",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "uri": "notes://index",
+      "name": "index",
+      "mimeType": "application/json",
+      "description": "Ids and titles of all saved notes."
+    }
+  ]
+}
