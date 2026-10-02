@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import shutil
 import signal
 import subprocess
 import sys
@@ -383,6 +384,7 @@ def test_server_gets_its_own_process_group(
         seen.update(kwargs)
         raise FileNotFoundError
 
+    monkeypatch.setattr(shutil, "which", lambda command: None)  # it is platform-specific too
     monkeypatch.setattr(sys, "platform", platform)
     monkeypatch.setattr(subprocess, "Popen", record)
     monkeypatch.setattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200, raising=False)
