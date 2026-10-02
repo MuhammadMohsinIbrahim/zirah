@@ -82,7 +82,7 @@ Goal: `pipx install zirah && zirah scan server.json` finds D1–D4 issues offlin
   *Done when:* the README commands against the examples produce the documented findings.
 - [x] **0.1.26 Repo hygiene** `[—]`: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue/PR templates, CHANGELOG.
   *Done when:* the files are present and linked from the README.
-- [ ] **0.1.27 README** `[—]`: 30-second GIF, `pipx install zirah`, quickstart, comparison table, OWASP mapping, architecture diagram, `--allow-exec` safety note.
+- [x] **0.1.27 README** `[—]`: 30-second GIF, `pipx install zirah`, quickstart, comparison table, OWASP mapping, architecture diagram, `--allow-exec` safety note.
   *Done when:* a new user can go from install to their first report using only the README.
 - [ ] **0.1.28 Release 0.1.0** `[—]`: PyPI trusted publishing workflow on tag.
   *Done when:* `pipx install zirah==0.1.0` works on a clean machine.
