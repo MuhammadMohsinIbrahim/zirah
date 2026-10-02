@@ -43,7 +43,7 @@ def answer(message: dict[str, Any], era: str) -> dict[str, Any] | None:
         }
     elif method == "initialize":
         result = {
-            "protocolVersion": "2025-06-18",
+            "protocolVersion": "2024-11-05" if era == "2024-11-05" else "2025-06-18",
             "capabilities": {"tools": {}},
             "serverInfo": SERVER_INFO,
         }
@@ -247,6 +247,16 @@ def test_sse_by_path(serve: Any) -> None:
     posts = [path for method, path, _, _ in server.seen if method == "POST"]
     assert posts
     assert all(p == "/messages?session=1" for p in posts)
+
+
+def test_sse_on_protocol_2024_11_05(serve: Any) -> None:
+    # The 2024-11-05 era used HTTP+SSE and had no MCP-Protocol-Version header.
+    server = serve("legacy-sse", "2024-11-05")
+    loaded = load_http(f"{server.url}/sse")
+    assert [t.name for t in loaded.manifest.tools] == ["add"]
+    lists = [h for m, _, h, body in server.seen if m == "POST" and body["method"] == "tools/list"]
+    assert lists
+    assert all("mcp-protocol-version" not in {k.lower() for k in h} for h in lists)
 
 
 def test_auto_falls_back_to_sse_on_405(serve: Any) -> None:

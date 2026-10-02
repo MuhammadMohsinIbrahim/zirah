@@ -267,6 +267,65 @@ rules:
     references:
       - https://www.koi.ai/blog/postmark-mcp-npm-malicious-backdoor-email-theft
 
+  - id: D1-SCANNER-EVASION
+    module: D1
+    severity: high
+    confidence: high
+    owasp: [MCP03]
+    title: Text aimed at a security reviewer or scanner to sway its verdict
+    remediation: >-
+      Remove the text. A tool description has no reason to address whoever audits it, and
+      telling a reviewer, scanner or AI judge that the tool is safe or has no findings is an
+      attempt to hide something else in the same text.
+    kind: regex
+    surfaces: [tools]
+    patterns:
+      # Someone addresses the reviewer, then tries to steer the verdict. The reviewer has to
+      # be addressed ("note to the security reviewer", "if you are an AI judge", "the model
+      # analyzing this"); merely mentioning a security review is not enough.
+      - |-
+        (?x:
+          (?:
+              \b(?:note|message|notice|hint|instructions?|attention|memo)\s+(?:to|for)\s+(?:the\s+|any\s+|all\s+)?
+              (?:(?:ai|llm|automated|security|code|model)\s+)*
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|moderators?|checkers?|graders?|inspectors?)\b
+            | \b(?:dear|hey|hello|hi)\s+(?:the\s+)?(?:(?:ai|llm|automated|security|code)\s+)*
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|moderators?|checkers?|graders?)\b
+            | \b(?:if|when|while)\s+you\s+are\s+(?:an?\s+|the\s+)?(?:(?:ai|llm|automated|security)\s+)+
+              (?:reviewer|scanner|auditor|judge|analy[sz]er|classifier|evaluator|model|tool)\b
+            | \b(?:if|when|while)\s+you\s+are\s+(?:an?\s+|the\s+)?
+              (?:scanner|auditor|judge|analy[sz]er|classifier|evaluator|moderator)\b
+            | \b(?:if|when|while)\s+(?:you\s+are\s+)?
+              (?:reviewing|scanning|auditing|analy[sz]ing|evaluating|classifying|inspecting|judging)\s+(?:this|these)\s+
+              (?:tools?|servers?|manifests?|descriptions?|text|packages?|prompts?|resources?|instructions)\b
+            | \b(?:to|for)\s+(?:the|any|all|every)\s+(?:(?:ai|llm|automated|security)\s+)+
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|tools?|models?)\s*[:,]
+            | (?m:^)[\ \t]*(?:(?:ai|llm|automated|security)\s+)+(?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?)\s*:
+            | \b(?:the|any|an?)\s+(?:ai\s+|llm\s+|language\s+)?(?:model|assistant|agent|llm)\s+(?:that\s+is\s+|which\s+is\s+)?
+              (?:analy[sz]ing|reviewing|auditing|scanning|evaluating|checking|inspecting|classifying|judging)\s+(?:this|these|it)\b
+          )
+          [\s\S]{0,200}?
+          (?:
+              \b(?:reply|respond|answer|return|output|report|say|conclude)\s+(?:with\s+|that\s+(?:there\s+(?:are|is)\s+)?)?
+              (?:no|zero|0)\s+(?:findings|issues|problems|vulnerabilities|risks|threats)\b
+            | \{\s*\\?"findings\\?"\s*:\s*\[\s*\]\s*\}
+            | \b(?:this|the|these)\s+(?:tool|server|code|package|description|text|manifest|prompt|resource|instructions?|field|content|file)s?
+              \s+(?:is|are|was|were|has\s+been|have\s+been)\s+(?:completely\s+|totally\s+|perfectly\s+|already\s+)?
+              (?:safe|benign|harmless|trusted|trustworthy|clean|legitimate|approved|verified|audited|whitelisted|allowlisted|not\s+malicious)\b
+            | \b(?:mark|classify|flag|label|rate|score|treat|consider|report|tag)\s+(?:this|it|them|these|the\s+(?:tool|server|text|description|manifest))
+              \s+(?:as\s+)?(?:safe|benign|harmless|trusted|clean|legitimate|approved|low[\s-]risk|not\s+malicious|grade\s+a\b)
+            | \b(?:do\s+not|don'?t|never)\s+(?:flag|report|mention|list|raise|include)\s+(?:this|it|anything|any\s+(?:findings|issues)|the\s+following)\b
+            | \b(?:ignore|skip|disregard|overlook|exclude)\s+(?:the\s+following|this(?:\s+(?:section|part|text|field|tool|description))?|everything\s+(?:below|after\s+this))\b
+            | \b(?:was|has\s+been|have\s+been)\s+(?:already\s+)?(?:audited|approved|verified|whitelisted|allowlisted|cleared|vetted)\b
+            | \b(?:no|zero)\s+(?:findings|issues|vulnerabilities)\s+(?:should|must|need\s+to)\s+be\s+(?:reported|raised|flagged)\b
+            | \b(?:give|assign)\s+(?:it|this)\s+(?:a\s+)?(?:perfect|high|maximum|full|top)\s+(?:score|rating|grade)\b
+          )
+        )
+      # Verdict steering that only makes sense aimed at a scanner, with no greeting needed.
+      - '\b(?:ignore|skip|disregard|overlook|exclude)\s+(?:the\s+following|this\s+(?:section|part|text|field|tool|description|content)|everything\s+(?:below|after\s+this))\s*,?\s*(?:when|while|during)\s+(?:(?:auditing|scanning|analy[sz]ing)\b|(?:a\s+|the\s+)?security\s+(?:review|reviews|reviewing|scan|scanning|audit|auditing|analysis)\b|reviewing\s+(?:this|the)\s+(?:tool|server|manifest|description|package)\b)'
+      - '\b(?:reply|respond|answer|return|output|report)\s+(?:with\s+)?(?:no|zero|0)\s+findings\s+for\s+(?:this|these|any|all|every)\b'
+      - '\b(?:mark|classify|label|flag|tag|treat)\s+this\s+(?:tool|server|description|manifest|package|code|text|field)\s+as\s+(?:benign|safe|clean|harmless|trusted|not\s+malicious)\b'
+
   # --- Smuggling through markup (tools only) --------------------------------------------
 
   - id: D1-HIDDEN-COMMENT

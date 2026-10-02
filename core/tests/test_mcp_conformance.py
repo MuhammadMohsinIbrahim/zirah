@@ -88,6 +88,29 @@ def test_stdio_manifest_matches_the_sdk_on_the_initialize_handshake(
     assert ours == theirs
 
 
+def test_stdio_manifest_matches_the_sdk_on_protocol_2024_11_05(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Offer only 2024-11-05 in initialize; the SDK server must accept it and list as usual.
+    monkeypatch.setattr(mcp_client._Session, "negotiate", mcp_client._Session._initialize)
+    monkeypatch.setattr(mcp_client, "HANDSHAKE_VERSIONS", ("2024-11-05",))
+    sent: list[str] = []
+    original = mcp_client._Session._call
+
+    def spy(self: Any, method: str, params: dict[str, Any], *args: Any) -> dict[str, Any]:
+        result: dict[str, Any] = original(self, method, params, *args)
+        if method == "initialize":
+            sent.append(result["protocolVersion"])
+        return result
+
+    monkeypatch.setattr(mcp_client._Session, "_call", spy)
+    ours = load_stdio(sys.executable, [SERVER], allow_exec=True).manifest
+    params = StdioServerParameters(command=sys.executable, args=[SERVER])
+    theirs = anyio.run(sdk_manifest, params)
+    assert sent == ["2024-11-05"]
+    assert ours == theirs
+
+
 def _free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))

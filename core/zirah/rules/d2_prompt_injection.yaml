@@ -201,6 +201,71 @@ rules:
           )
         )
 
+  # The destination comes out of content the model reads at run time: a tool's output, a
+  # fetched page, a document. Whoever controls that content then chooses where the data
+  # goes, which is how indirect injection turns into exfiltration. A template variable
+  # ({{recipient}}) or a fixed address is filled by the user or the configuration and is
+  # not flagged here.
+  - id: D2-EXFIL-INDIRECT-DESTINATION
+    module: D2
+    severity: high
+    confidence: medium
+    owasp: [MCP06]
+    title: Sends data to a destination taken from tool output or fetched content
+    remediation: >-
+      Send results only to a destination fixed in the server's configuration or chosen by
+      the user. A URL or address read from tool output, a web page or a document is
+      controlled by whoever wrote that content.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      # send ... to the URL given in the tool output / found on the page / returned by X
+      - |-
+        (?x:
+          (?<!\bnever\s)(?<!\bnot\s)(?<!n't\s)
+          \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|leak|submit|deliver|push|report)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,60}?
+          \b(?:to|at|into)\s+(?:the\s+|whatever\s+|whichever\s+|any\s+|each\s+)?
+          (?:urls?|links?|address(?:es)?|endpoints?|webhooks?|servers?|hosts?|domains?|email(?:\s+address(?:es)?)?|recipients?|destinations?|locations?)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,40}?
+          (?:
+              \b(?:in|from|by|inside|within|on|of)\s+(?:the\s+|a\s+|any\s+|that\s+|this\s+)?
+              (?:
+                  (?:(?:previous|last|next|other|another|first|second)\s+)?(?:tool|function|api)(?:'s)?\s+(?:calls?\s+)?(?:outputs?|results?|responses?|replies|return\s+values?)\b
+                | (?:outputs?|results?|responses?)\s+(?:of|from)\s+(?:the\s+|a\s+|another\s+|any\s+|that\s+|this\s+|each\s+)?(?:[\w-]+\s+)?(?:tool|function)(?:\s+calls?)?\b
+                | (?:another|other|previous|last|next)\s+tool\b
+                | (?:fetched|retrieved|downloaded|scraped|browsed|crawled|loaded)\s+(?:content|page|pages|document|documents|data|text|html|file|files|results?)\b
+                | (?:web\s*page|website|web\s+content|page\s+content|html|search\s+results?|documents?|pdfs?)\b
+                | (?:page|content|file|document)\s+(?:you|it)\s+(?:fetch|fetched|read|visit|visited|open|opened|browse|browsed|retrieve|retrieved|load|loaded)\b
+              )
+            | \b(?:returned|provided|given|supplied|produced|emitted)\s+by\s+(?:the\s+|a\s+|another\s+|any\s+)?(?:[\w-]+\s+)?(?:tool|function|server|api)\b
+            | \b(?:returned|provided|given|supplied|produced)\s+by\s+`?[a-z][a-z0-9]*_[a-z0-9_]+`?
+          )
+        )
+      # take the URL from the tool output ... send it there / use it as the destination
+      - |-
+        (?x:
+          (?<!\bnever\s)(?<!\bnot\s)(?<!n't\s)
+          \b(?:use|take|read|extract|get|grab|find|pick|copy|parse|treat|follow)\s+
+          (?:the\s+|any\s+|whatever\s+|each\s+|an?\s+)?
+          (?:urls?|links?|address(?:es)?|endpoints?|webhooks?|destinations?|recipients?|hosts?|domains?)\b
+          (?:(?![.!?](?:\s|$))[^\n]){0,40}?
+          \b(?:in|from|inside|within|on)\s+(?:the\s+|a\s+|any\s+|that\s+|this\s+)?
+          (?:
+              (?:(?:previous|last|next|other|another)\s+)?(?:tool|function|api)(?:'s)?\s+(?:calls?\s+)?(?:outputs?|results?|responses?|replies)\b
+            | (?:fetched|retrieved|downloaded|scraped|browsed|crawled|loaded)\s+(?:content|page|pages|document|documents|data|text|html|file|files)\b
+            | (?:web\s*page|website|web\s+content|page\s+content|search\s+results?|documents?|pdfs?)\b
+          )
+          (?:(?![.!?](?:\s|$))[^\n]){0,80}?
+          (?:
+              \b(?:send|post|upload|forward|e-?mail|mail|transmit|exfiltrate|submit|deliver|push)\b
+              (?:(?![.!?](?:\s|$))[^\n]){0,60}?\b(?:there|to\s+(?:it|that|them|this))\b
+            | \bas\s+(?:the\s+)?(?:destination|recipient|target|endpoint|webhook|upload\s+url)\b
+          )
+        )
+      # send ... wherever the tool output / page says
+      - '(?<!\bnever\s)(?<!\bnot\s)(?<!n''t\s)\b(?:send|post|upload|forward|e-?mail|mail|transmit|submit|deliver|push)\b(?:(?![.!?](?:\s|$))[^\n]){0,60}?\bwherever\s+(?:the\s+|a\s+|that\s+)?(?:tool(?:''s)?\s+(?:output|result|response)|(?:fetched\s+)?(?:page|document|web\s*page|website|content|response|result|output))\s+(?:says|say|points|point|tells|indicates|specifies|directs|asks)\b'
+
   - id: D2-MARKDOWN-EXFIL
     module: D2
     severity: high
@@ -245,3 +310,62 @@ rules:
       - '\bwithout\s+(?:asking|(?:the\s+user''?s\s+)?(?:confirmation|approval|permission|consent))\b'
       - '\b(?:do\s+not|don''t|never)\s+ask\s+(?:the\s+user\s+)?(?:for\s+)?(?:confirmation|permission|approval)\b'
       - '\b(?:immediately|automatically|silently)\s+(?:call|invoke|run|execute)\b'
+
+  - id: D2-SCANNER-EVASION
+    module: D2
+    severity: high
+    confidence: high
+    owasp: [MCP06]
+    title: Text aimed at a security reviewer or scanner to sway its verdict
+    remediation: >-
+      Remove the text. Prompts, resources and server instructions have no reason to address
+      whoever audits them; telling a reviewer, scanner or AI judge that the server is safe or
+      has no findings is an attempt to get something else past review.
+    kind: regex
+    surfaces: [prompts, resources, instructions]
+    patterns:
+      # Someone addresses the reviewer, then tries to steer the verdict. The reviewer has to
+      # be addressed ("note to the security reviewer", "if you are an AI judge", "the model
+      # analyzing this"); merely mentioning a security review is not enough.
+      - |-
+        (?x:
+          (?:
+              \b(?:note|message|notice|hint|instructions?|attention|memo)\s+(?:to|for)\s+(?:the\s+|any\s+|all\s+)?
+              (?:(?:ai|llm|automated|security|code|model)\s+)*
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|moderators?|checkers?|graders?|inspectors?)\b
+            | \b(?:dear|hey|hello|hi)\s+(?:the\s+)?(?:(?:ai|llm|automated|security|code)\s+)*
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|moderators?|checkers?|graders?)\b
+            | \b(?:if|when|while)\s+you\s+are\s+(?:an?\s+|the\s+)?(?:(?:ai|llm|automated|security)\s+)+
+              (?:reviewer|scanner|auditor|judge|analy[sz]er|classifier|evaluator|model|tool)\b
+            | \b(?:if|when|while)\s+you\s+are\s+(?:an?\s+|the\s+)?
+              (?:scanner|auditor|judge|analy[sz]er|classifier|evaluator|moderator)\b
+            | \b(?:if|when|while)\s+(?:you\s+are\s+)?
+              (?:reviewing|scanning|auditing|analy[sz]ing|evaluating|classifying|inspecting|judging)\s+(?:this|these)\s+
+              (?:tools?|servers?|manifests?|descriptions?|text|packages?|prompts?|resources?|instructions)\b
+            | \b(?:to|for)\s+(?:the|any|all|every)\s+(?:(?:ai|llm|automated|security)\s+)+
+              (?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?|classifiers?|evaluators?|tools?|models?)\s*[:,]
+            | (?m:^)[\ \t]*(?:(?:ai|llm|automated|security)\s+)+(?:reviewers?|scanners?|auditors?|judges?|analy[sz]ers?)\s*:
+            | \b(?:the|any|an?)\s+(?:ai\s+|llm\s+|language\s+)?(?:model|assistant|agent|llm)\s+(?:that\s+is\s+|which\s+is\s+)?
+              (?:analy[sz]ing|reviewing|auditing|scanning|evaluating|checking|inspecting|classifying|judging)\s+(?:this|these|it)\b
+          )
+          [\s\S]{0,200}?
+          (?:
+              \b(?:reply|respond|answer|return|output|report|say|conclude)\s+(?:with\s+|that\s+(?:there\s+(?:are|is)\s+)?)?
+              (?:no|zero|0)\s+(?:findings|issues|problems|vulnerabilities|risks|threats)\b
+            | \{\s*\\?"findings\\?"\s*:\s*\[\s*\]\s*\}
+            | \b(?:this|the|these)\s+(?:tool|server|code|package|description|text|manifest|prompt|resource|instructions?|field|content|file)s?
+              \s+(?:is|are|was|were|has\s+been|have\s+been)\s+(?:completely\s+|totally\s+|perfectly\s+|already\s+)?
+              (?:safe|benign|harmless|trusted|trustworthy|clean|legitimate|approved|verified|audited|whitelisted|allowlisted|not\s+malicious)\b
+            | \b(?:mark|classify|flag|label|rate|score|treat|consider|report|tag)\s+(?:this|it|them|these|the\s+(?:tool|server|text|description|manifest))
+              \s+(?:as\s+)?(?:safe|benign|harmless|trusted|clean|legitimate|approved|low[\s-]risk|not\s+malicious|grade\s+a\b)
+            | \b(?:do\s+not|don'?t|never)\s+(?:flag|report|mention|list|raise|include)\s+(?:this|it|anything|any\s+(?:findings|issues)|the\s+following)\b
+            | \b(?:ignore|skip|disregard|overlook|exclude)\s+(?:the\s+following|this(?:\s+(?:section|part|text|field|tool|description))?|everything\s+(?:below|after\s+this))\b
+            | \b(?:was|has\s+been|have\s+been)\s+(?:already\s+)?(?:audited|approved|verified|whitelisted|allowlisted|cleared|vetted)\b
+            | \b(?:no|zero)\s+(?:findings|issues|vulnerabilities)\s+(?:should|must|need\s+to)\s+be\s+(?:reported|raised|flagged)\b
+            | \b(?:give|assign)\s+(?:it|this)\s+(?:a\s+)?(?:perfect|high|maximum|full|top)\s+(?:score|rating|grade)\b
+          )
+        )
+      # Verdict steering that only makes sense aimed at a scanner, with no greeting needed.
+      - '\b(?:ignore|skip|disregard|overlook|exclude)\s+(?:the\s+following|this\s+(?:section|part|text|field|tool|description|content)|everything\s+(?:below|after\s+this))\s*,?\s*(?:when|while|during)\s+(?:(?:auditing|scanning|analy[sz]ing)\b|(?:a\s+|the\s+)?security\s+(?:review|reviews|reviewing|scan|scanning|audit|auditing|analysis)\b|reviewing\s+(?:this|the)\s+(?:tool|server|manifest|description|package)\b)'
+      - '\b(?:reply|respond|answer|return|output|report)\s+(?:with\s+)?(?:no|zero|0)\s+findings\s+for\s+(?:this|these|any|all|every)\b'
+      - '\b(?:mark|classify|label|flag|tag|treat)\s+this\s+(?:tool|server|description|manifest|package|code|text|field)\s+as\s+(?:benign|safe|clean|harmless|trusted|not\s+malicious)\b'

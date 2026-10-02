@@ -152,13 +152,49 @@ def test_discover_answer_without_a_modern_version_falls_back() -> None:
     assert fetch_manifest(Scripted(handle))["serverInfo"]["name"] == "legacy"
 
 
-def test_initialize_rejected_as_unsupported_names_the_versions() -> None:
+def test_2024_11_05_is_supported_and_sends_no_version_header() -> None:
+    transport = Scripted(legacy("2024-11-05"))
+    assert fetch_manifest(transport)["serverInfo"]["name"] == "legacy"
+    assert [m for m, _, _ in transport.sent] == [
+        "server/discover",
+        "initialize",
+        "notifications/initialized",
+        "tools/list",
+    ]
+    assert transport.sent[3][2] == {}
+
+
+def test_initialize_rejected_naming_an_older_supported_version_is_retried() -> None:
+    requested = []
+
+    def handle(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        if method == "initialize":
+            requested.append(params["protocolVersion"])
+            if params["protocolVersion"] != "2024-11-05":
+                return error(-32022, {"supported": ["2024-11-05", "1999-01-01"]})
+        return legacy("2024-11-05")(method, params)
+
+    assert fetch_manifest(Scripted(handle))["serverInfo"]["name"] == "legacy"
+    assert requested == ["2025-11-25", "2024-11-05"]
+
+
+def test_initialize_rejected_twice_fails_clearly() -> None:
     def handle(method: str, params: dict[str, Any]) -> dict[str, Any]:
         if method == "server/discover":
             return error(-32601)
         return error(-32022, {"supported": ["2024-11-05"]})
 
     with pytest.raises(LoaderError, match=r"unsupported MCP protocol version \(2024-11-05\)"):
+        fetch_manifest(Scripted(handle))
+
+
+def test_initialize_rejected_as_unsupported_names_the_versions() -> None:
+    def handle(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        if method == "server/discover":
+            return error(-32601)
+        return error(-32022, {"supported": ["1999-01-01"]})
+
+    with pytest.raises(LoaderError, match=r"unsupported MCP protocol version \(1999-01-01\)"):
         fetch_manifest(Scripted(handle))
 
 

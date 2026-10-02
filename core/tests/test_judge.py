@@ -154,6 +154,13 @@ def test_untrusted_text_is_fenced_as_json_data() -> None:
     assert schema["additionalProperties"] is False
 
 
+def test_text_aimed_at_the_judge_is_a_static_finding() -> None:
+    # Even with --llm none, the attempt to talk the reviewer out of findings is reported.
+    result = scan(str(INJECTION)).result
+    found = [(f.rule_id, f.evidence.location, f.engine) for f in result.findings]
+    assert found == [("D1-SCANNER-EVASION", "/tools/0/description", Engine.STATIC)]
+
+
 def test_forged_or_out_of_scope_verdicts_are_dropped() -> None:
     def hostile(fields: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [
@@ -164,7 +171,8 @@ def test_forged_or_out_of_scope_verdicts_are_dropped() -> None:
         ]
 
     result = scan(str(INJECTION), llm=FakeLlm(hostile)).result
-    assert [(f.rule_id, f.severity.value) for f in result.findings] == [
+    judged = [f for f in result.findings if f.engine is Engine.LLM]
+    assert [(f.rule_id, f.severity.value) for f in judged] == [
         ("D1-LLM-HIDDEN-INSTRUCTIONS", "high")
     ]
 
