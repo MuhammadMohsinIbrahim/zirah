@@ -2,8 +2,8 @@
 
 **Find tool poisoning, prompt injection, tool shadowing and leaked secrets in MCP servers before your agent trusts them. Offline, no account, every finding explained.**
 
-[![CI](https://github.com/MuhammadMohsinIbrahim/zirah/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadMohsinIbrahim/zirah/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/zirah)](https://pypi.org/project/zirah/)
+[![CI](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/zirah-mcp)](https://pypi.org/project/zirah-mcp/)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776ab)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
@@ -26,17 +26,18 @@ It works fully offline; an LLM judge is optional.
 
 ## Install
 
-Zirah needs Python 3.12 or newer.
+Zirah needs Python 3.12 or newer. The package on PyPI is `zirah-mcp`; the command it
+installs is `zirah`.
 
 ```bash
-pipx install zirah
+pipx install zirah-mcp
 ```
 
-`uv tool install zirah` and `pip install zirah` work too. To run the latest code from this
+`uv tool install zirah-mcp` and `pip install zirah-mcp` work too. To run the latest code from this
 repository instead:
 
 ```bash
-pipx install "git+https://github.com/MuhammadMohsinIbrahim/zirah.git#subdirectory=core"
+pipx install "git+https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git#subdirectory=core"
 ```
 
 On Windows, if Application Control blocks the `zirah` launcher, run `python -m zirah`
@@ -48,7 +49,7 @@ instead (see [Troubleshooting](#troubleshooting)).
 [malicious demo server](examples/) to try:
 
 ```bash
-git clone https://github.com/MuhammadMohsinIbrahim/zirah.git && cd zirah
+git clone https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git && cd zirah
 zirah scan examples/malicious/manifest.json
 ```
 
@@ -98,8 +99,8 @@ findings are marked `engine: llm`, it never removes a static finding, and the te
 is fenced as untrusted data.
 
 Detection is pattern-based and will have gaps and false positives. Please report both:
-[new rule](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=new_rule.yml),
-[false positive](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=false_positive.yml).
+[new rule](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=new_rule.yml),
+[false positive](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=false_positive.yml).
 
 ## How Zirah compares
 
@@ -264,7 +265,7 @@ command once by hand first.
 escapes (`\u200b`, `\x1b`) on purpose, so you see what the model would receive.
 
 **A finding looks wrong.** Report a
-[false positive](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=false_positive.yml)
+[false positive](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=false_positive.yml)
 with the rule id and the text.
 
 ## Contributing

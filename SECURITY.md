@@ -9,7 +9,7 @@ you for reporting responsibly.
 
 Report it privately through GitHub's private vulnerability reporting:
 
-1. Go to the [Security tab](https://github.com/MuhammadMohsinIbrahim/zirah/security) of
+1. Go to the [Security tab](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/security) of
    this repository.
 2. Click **Report a vulnerability**.
 3. Describe the problem, the affected version (`zirah --version`) and the steps or input
@@ -40,12 +40,12 @@ Report privately anything that harms a person *running* Zirah, for example:
 
 A malicious text that Zirah does **not** detect (a false negative) is a detection gap, not
 a vulnerability in Zirah. Please open a
-[new rule request](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=new_rule.yml)
+[new rule request](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=new_rule.yml)
 for it, with harmless example text. If the gap is being exploited in the wild against a
 real MCP server and you would rather not describe it publicly, report it privately as above.
 
 Wrong findings on benign servers are
-[false positives](https://github.com/MuhammadMohsinIbrahim/zirah/issues/new?template=false_positive.yml).
+[false positives](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues/new?template=false_positive.yml).
 
 ## Supported versions
 

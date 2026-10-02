@@ -43,10 +43,11 @@ First release, v0.1: the offline CLI core.
   text is fenced as data.
 - `examples/` with a harmless malicious demo server and a benign one (static and stdio).
 - SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue and pull request templates.
+- Published on PyPI as `zirah-mcp`; the import package and the command are `zirah`.
 - Releases are built and published from GitHub Actions with PyPI trusted publishing
   (TestPyPI first), with PEP 740 attestations.
 
 Rule pack: 2026.10.1.
 
-[Unreleased]: https://github.com/MuhammadMohsinIbrahim/zirah/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/MuhammadMohsinIbrahim/zirah/releases/tag/v0.1.0
+[Unreleased]: https://github.com/MuhammadMohsinIbrahim/zirah-mcp/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/MuhammadMohsinIbrahim/zirah-mcp/releases/tag/v0.1.0

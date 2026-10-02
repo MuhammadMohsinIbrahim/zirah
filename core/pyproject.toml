@@ -1,5 +1,5 @@
 [project]
-name = "zirah"
+name = "zirah-mcp"
 dynamic = ["version"]
 description = "Offline-first security scanner and trust registry for MCP servers."
 readme = "README.md"
@@ -7,7 +7,16 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Muhammad Mohsin Ibrahim" }]
 requires-python = ">=3.12"
-keywords = ["mcp", "security", "scanner", "ai-agents", "supply-chain"]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "security",
+    "scanner",
+    "prompt-injection",
+    "tool-poisoning",
+    "ai-agents",
+    "supply-chain",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -27,11 +36,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MuhammadMohsinIbrahim/zirah"
-Repository = "https://github.com/MuhammadMohsinIbrahim/zirah"
-Issues = "https://github.com/MuhammadMohsinIbrahim/zirah/issues"
-Changelog = "https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/CHANGELOG.md"
-Security = "https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/SECURITY.md"
+Homepage = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp"
+Repository = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp"
+Issues = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp/issues"
+Changelog = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/CHANGELOG.md"
+Security = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/SECURITY.md"
 
 [project.scripts]
 zirah = "zirah.cli:app"

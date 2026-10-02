@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks. See [CONTRIBUTING.md](https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/CONTRIBUTING.md#adding-a-detection-rule)
+        Thanks. See [CONTRIBUTING.md](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/CONTRIBUTING.md#adding-a-detection-rule)
         for how rules and fixtures work. **Keep examples harmless:** use `example.invalid`
         hosts and fake `zirah_fake_...` secrets, and nothing that works as a real attack.
         If the gap is being exploited in the wild and you would rather not describe it in

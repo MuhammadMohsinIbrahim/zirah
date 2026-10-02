@@ -28,7 +28,7 @@ SARIF_SCHEMA = (
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
 )
 TOOL_NAME = "Zirah"
-INFORMATION_URI = "https://github.com/MuhammadMohsinIbrahim/zirah"
+INFORMATION_URI = "https://github.com/MuhammadMohsinIbrahim/zirah-mcp"
 FINGERPRINT = "zirahFindingId/v1"
 
 LEVEL: dict[Severity, str] = {
