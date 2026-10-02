@@ -10,10 +10,12 @@ Protocol versions:
 - ``2026-07-28`` (and later modern versions this client knows): no ``initialize``; the client
   probes ``server/discover`` and stamps every request with ``_meta`` (protocol version, client
   info and capabilities).
-- ``2025-03-26``, ``2025-06-18`` and ``2025-11-25``: the ``initialize`` handshake, used when
-  the ``server/discover`` probe is not answered with a modern version.
+- ``2024-11-05``, ``2025-03-26``, ``2025-06-18`` and ``2025-11-25``: the ``initialize``
+  handshake, used when the ``server/discover`` probe is not answered with a modern version.
+  Listing works the same way in all of them; only ``2025-06-18`` and later send the
+  ``MCP-Protocol-Version`` HTTP header.
 
-Anything else (``2024-11-05`` or an unknown version) fails with a clear error.
+Anything else fails with a clear error naming the versions on both sides.
 
 The server is untrusted, so every limit is enforced here or in the transport: message size,
 items per list, pages per list, time per request and total time.
@@ -31,7 +33,7 @@ from zirah.loaders.base import LoaderError
 
 MODERN_VERSIONS: Final = ("2026-07-28",)
 """Protocol versions with the stateless per-request ``_meta`` envelope."""
-HANDSHAKE_VERSIONS: Final = ("2025-03-26", "2025-06-18", "2025-11-25")
+HANDSHAKE_VERSIONS: Final = ("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25")
 """Protocol versions negotiated with ``initialize``."""
 SUPPORTED_VERSIONS: Final = (*HANDSHAKE_VERSIONS, *MODERN_VERSIONS)
 HEADER_VERSIONS: Final = ("2025-06-18", "2025-11-25", *MODERN_VERSIONS)
@@ -185,21 +187,24 @@ class _Session:
             raise _ProbeTimeoutError from None
 
     def _initialize(self) -> None:
-        params = {
-            "protocolVersion": HANDSHAKE_VERSIONS[-1],
-            "capabilities": {},
-            "clientInfo": CLIENT_INFO,
-        }
-        try:
-            result = self._call("initialize", params, {}, self.request_timeout)
-        except RpcError as exc:
-            if exc.code == UNSUPPORTED_PROTOCOL_VERSION:
-                raise self._unsupported(_supported(exc.data)) from None
-            raise
-        version = result.get("protocolVersion")
-        if version not in HANDSHAKE_VERSIONS:
-            raise self._unsupported([version])
-        self.version = version
+        version = HANDSHAKE_VERSIONS[-1]
+        for attempt in range(2):
+            params = {"protocolVersion": version, "capabilities": {}, "clientInfo": CLIENT_INFO}
+            try:
+                result = self._call("initialize", params, {}, self.request_timeout)
+                break
+            except RpcError as exc:
+                if exc.code != UNSUPPORTED_PROTOCOL_VERSION:
+                    raise
+                supported = _supported(exc.data)
+                mutual = [v for v in HANDSHAKE_VERSIONS if v in supported]
+                if not mutual or attempt == 1:
+                    raise self._unsupported(supported) from None
+                version = mutual[-1]  # a server that errors instead of offering its version
+        agreed = result.get("protocolVersion")
+        if agreed not in HANDSHAKE_VERSIONS:
+            raise self._unsupported([agreed])
+        self.version = agreed
         self.capabilities = _dict(result.get("capabilities"))
         self.server_info = result.get("serverInfo")
         self.instructions = result.get("instructions")

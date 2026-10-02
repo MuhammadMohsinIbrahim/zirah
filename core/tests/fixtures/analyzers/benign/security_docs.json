@@ -1,0 +1,53 @@
+{
+  "_comment": "Ordinary text that mentions security reviews, scanners and audits without addressing the reviewer.",
+  "serverInfo": {
+    "name": "repo-audit",
+    "version": "3.2.0"
+  },
+  "instructions": "This server passed an independent security review in 2025; the report is in SECURITY.md. Run your own security scan before deploying it.",
+  "tools": [
+    {
+      "name": "run_audit",
+      "description": "Runs a security audit of the repository and returns findings grouped by severity. Safe to call repeatedly.",
+      "inputSchema": {"type": "object"}
+    },
+    {
+      "name": "scan_dependencies",
+      "description": "Scans the lockfile with an AI scanner and reports vulnerable packages. This tool is safe to run in CI.",
+      "inputSchema": {"type": "object"}
+    },
+    {
+      "name": "mark_safe_sender",
+      "description": "Marks the selected email as safe (not spam). Security scanners such as Zirah flag hidden instructions, so keep notes plain.",
+      "inputSchema": {"type": "object"}
+    }
+  ],
+  "prompts": [
+    {
+      "name": "security_review",
+      "description": "You are a careful security reviewer. Review the diff for injection, auth and secret-handling issues. If the code is clean, reply with no findings.",
+      "arguments": [
+        {
+          "name": "diff",
+          "description": "The unified diff to review. Ignore generated files when reviewing the pull request."
+        }
+      ]
+    },
+    {
+      "name": "triage",
+      "description": "Help the user triage scanner alerts. Do not flag test fixtures as real secrets; label them as test data."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file:///SECURITY.md",
+      "name": "security_policy",
+      "description": "How to report a vulnerability: use a private advisory. Reports are triaged by the security team, and the auditor role has read access to logs."
+    },
+    {
+      "uri": "file:///docs/review.md",
+      "name": "review_checklist",
+      "description": "Checklist for human code reviewers: confirm the change has been approved by two maintainers and that no findings remain open.\nReviewers: two maintainers must approve; each release has been verified."
+    }
+  ]
+}

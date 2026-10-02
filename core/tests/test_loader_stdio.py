@@ -105,7 +105,14 @@ def test_total_timeout(fast_probe: None) -> None:
 
 
 @pytest.mark.parametrize(
-    "flags", [(), ("--version", "2025-03-26"), ("--version", "2025-11-25"), ("--era", "modern")]
+    "flags",
+    [
+        (),
+        ("--version", "2024-11-05"),
+        ("--version", "2025-03-26"),
+        ("--version", "2025-11-25"),
+        ("--era", "modern"),
+    ],
 )
 def test_reads_the_manifest_in_every_supported_era(flags: tuple[str, ...]) -> None:
     loaded = load_stdio(PYTHON, [SERVER, *flags], allow_exec=True)
@@ -119,7 +126,7 @@ def test_reads_the_manifest_in_every_supported_era(flags: tuple[str, ...]) -> No
     assert (loaded.target.location, loaded.target.args) == (PYTHON, (SERVER, *flags))
 
 
-@pytest.mark.parametrize("version", ["2024-11-05", "1999-01-01"])
+@pytest.mark.parametrize("version", ["2024-10-07", "1999-01-01"])
 def test_unsupported_protocol_versions_fail_clearly(version: str) -> None:
     with pytest.raises(LoaderError, match=f"unsupported MCP protocol version \\({version}\\)"):
         load("--version", version)

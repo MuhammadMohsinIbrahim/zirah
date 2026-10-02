@@ -98,7 +98,7 @@ zirah/                      (monorepo)
 └── docker-compose.yml       postgres, redis, api, worker, web
 ```
 
-**MCP client:** Runtime uses a minimal in-house MCP client for a small, auditable dependency footprint; the official SDK is used for conformance tests. The client only negotiates (protocol 2025-03-26 and newer: `initialize` for 2025-era servers, `server/discover` for 2026-07-28) and lists tools, prompts and resources. It never calls a tool, and it enforces limits on message size, items, pages, per-request time and total time.
+**MCP client:** Runtime uses a minimal in-house MCP client for a small, auditable dependency footprint; the official SDK is used for conformance tests. The client only negotiates (protocol 2024-11-05 and newer: `initialize` for 2024- and 2025-era servers, `server/discover` for 2026-07-28) and lists tools, prompts and resources. It never calls a tool, and it enforces limits on message size, items, pages, per-request time and total time.
 
 ### 4.1 Scan pipeline
 

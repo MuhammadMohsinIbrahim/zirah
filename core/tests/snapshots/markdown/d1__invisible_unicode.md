@@ -7,7 +7,7 @@ Severe findings. Do not use this server until they are fixed.
 | Target | `d1/invisible_unicode.json` |
 | Server | calc-tools 1.0.0 |
 | Findings | 8 at 8 locations: 6 high, 2 medium |
-| Rule pack | 2026.09.8 |
+| Rule pack | 2026.10.1 |
 | Engines | static |
 | Zirah | 0.1.0.dev0 |
 
