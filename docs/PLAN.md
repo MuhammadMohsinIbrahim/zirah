@@ -19,7 +19,7 @@ Goal: `pipx install zirah-mcp && zirah scan server.json` finds D1–D4 issues of
   *Done when:* `uv sync && uv run pytest` works on a clean clone.
 - [x] **0.1.2 Data contract** `[—]`: `models.py` with Target, Manifest (canonical sha256), Evidence (2000-char cap), Finding (deterministic id, multi-OWASP), LlmInfo, ScanResult (`trust_score`, `finished_at`, `engines_used`).
   *Done when:* contract tests cover validation, normalization and JSON round-trips.
-- [x] **0.1.3 CI workflow** `[—]`: GitHub Actions running ruff, ruff format, mypy and pytest on Ubuntu and Windows for every PR to `main`; Dependabot for uv and Actions.
+- [x] **0.1.3 CI workflow** `[—]`: GitHub Actions running ruff, ruff format, mypy and pytest on Ubuntu and Windows for every PR to `main`; Dependabot for uv and Actions (later removed).
   *Done when:* a PR shows a green required check and branch protection on `main` requires it.
 - [x] **0.1.4 ScanSession model** `[—]`: `ScanSession { results[] }` in `models.py`, plus tests.
   *Done when:* it round-trips through JSON and rejects two results for the same target.

@@ -9,8 +9,24 @@ Rule pack versions (`YYYY.MM.N`) are recorded in every scan result and noted per
 
 ## [Unreleased]
 
+### Added
+
+- PRIVACY.md: Zirah collects no data and has no telemetry; with `--llm`, scanned manifest
+  text goes only to the provider you choose.
+- README: a "What `zirah discover` reads" section listing every config file per client.
+
+### Fixed
+
+- README quickstart and CONTRIBUTING: `cd zirah-mcp` after cloning (the repository was
+  renamed).
+
 ### Changed
 
+- `.env.example` says to set the variables in your environment; Zirah does not read a
+  `.env` file.
+- SPEC.md: 0.1.0 has shipped, the v0.1 coverage floor is 95%, and the CI checklist marks
+  CodeQL and the coverage badge as planned. docs/PLAN.md notes that Dependabot was later
+  removed.
 - The PyPI summary and the PyPI README describe what Zirah ships today, a scanner; the
   trust registry is on the roadmap (v0.3), not part of 0.1.0.
 

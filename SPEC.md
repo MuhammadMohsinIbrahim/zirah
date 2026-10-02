@@ -1,6 +1,6 @@
 # Zirah — Project Spec (v2)
 
-> Renamed from "MCP Sentinel" (already used by 5+ GitHub repos and by Microsoft Sentinel's MCP server). Zirah (زرہ) means armor. The PyPI distribution is `zirah-mcp` (free on PyPI, checked Oct 2026); the import package and the command stay `zirah`. No placeholder upload: the real 0.1.0 is published when v0.1 ships.
+> Renamed from "MCP Sentinel" (already used by 5+ GitHub repos and by Microsoft Sentinel's MCP server). Zirah (زرہ) means armor. The PyPI distribution is `zirah-mcp` (free on PyPI, checked Oct 2026); the import package and the command stay `zirah`. 0.1.0 shipped on PyPI on 2026-10-02.
 >
 > **v2 changes:** applies the architecture review (Sept 2026): loaders and execution modes per release, two verification levels, attestation trust model, registry abuse policy, `trust_score` replaces the risk score, multi-target `ScanSession`, and a six-release roadmap. Build progress is tracked in `docs/PLAN.md`.
 
@@ -185,7 +185,7 @@ The old prototype is **not ported**. Rules and prompts are written fresh from th
 
 | Release | Scope | Target |
 |---|---|---|
-| **v0.1 — CLI core** | Models, loaders (stdio with `--allow-exec`, streamable-http, sse, static JSON), D1–D4 single-manifest, D14 discover, `scan --all` → ScanSession, scoring, rule packs, LLM judge (ollama/openai/anthropic/none), terminal/JSON/SARIF/markdown reports, 60%+ coverage, README with GIF, publish 0.1.0 to PyPI | Weeks 1–3 |
+| **v0.1 — CLI core** | Models, loaders (stdio with `--allow-exec`, streamable-http, sse, static JSON), D1–D4 single-manifest, D14 discover, `scan --all` → ScanSession, scoring, rule packs, LLM judge (ollama/openai/anthropic/none), terminal/JSON/SARIF/markdown reports, 95% coverage floor in CI, README with GIF, publish 0.1.0 to PyPI | Weeks 1–3 |
 | **v0.2 — Deep static** | Git/npm/PyPI loaders (source only), D5 (Semgrep), D6-static, D7 (OSV + npm/PyPI metadata), `--docker` runner, bundled similarity corpus (+ `zirah-mcp[embed]`), MCP server mode (local), GitHub Action + SARIF upload. **Minimum portfolio-ready release.** | Weeks 4–7 |
 | **v0.3 — Registry** | FastAPI + Postgres/pgvector + arq, registry-side scanning of public identifiers, Ed25519 attestations + key endpoint, hash-chained log, D10 drift, `zirah verify`, registry lookup in MCP mode, DISPUTES.md, basic Next.js registry pages | Weeks 8–11 |
 | **v0.4 — Sandbox** | Detonation sandbox with canaries + mitmproxy, D8, D9, D6-dynamic | Weeks 12–14 |
@@ -197,7 +197,7 @@ Ship v0.1 publicly as soon as it works. An early release that works beats a late
 ## 7. GitHub "top-tier" checklist
 
 - Apache-2.0 license, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue/PR templates
-- CI: ruff, mypy, pytest, coverage badge, bench-metrics badge, CodeQL, Dependabot
+- CI: ruff, mypy, pytest. Planned: coverage badge, CodeQL (v0.2), bench-metrics badge (v0.5)
 - Releases through GitHub Actions → PyPI (trusted publishing), Docker image to GHCR
 - README: 30-second GIF, one-command install (`pipx install zirah-mcp`), comparison table, OWASP mapping, architecture diagram
 - `examples/`: a deliberately malicious demo MCP server that people can scan themselves
