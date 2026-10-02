@@ -65,6 +65,7 @@ process tree afterwards. Prefer a static manifest when you can.
 - [Documentation and comparison with other scanners](https://github.com/MuhammadMohsinIbrahim/zirah-mcp#readme)
 - [Changelog](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/CHANGELOG.md)
 - [Security policy](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/SECURITY.md)
+- [Privacy](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/PRIVACY.md): no data collection, no telemetry
 - [Contributing](https://github.com/MuhammadMohsinIbrahim/zirah-mcp/blob/main/CONTRIBUTING.md)
 
 Written and maintained by

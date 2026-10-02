@@ -13,7 +13,7 @@ You need Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git
-cd zirah
+cd zirah-mcp
 uv sync
 uv run pytest
 ```

@@ -13,7 +13,8 @@ Zirah reads an MCP server's manifest (its tools, prompts, resources and instruct
 detection rules over every string the model will see, and gives the server an explainable
 trust score from 0 to 100. Each finding carries the exact location (a JSON pointer), the
 evidence, an [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/) mapping and a fix.
-It works fully offline; an LLM judge is optional.
+It works fully offline, collects no data and has no telemetry ([privacy](PRIVACY.md)); an
+LLM judge is optional.
 
 ![Zirah scanning a benign and a malicious demo MCP server](docs/demo.gif)
 
@@ -49,7 +50,7 @@ instead (see [Troubleshooting](#troubleshooting)).
 [malicious demo server](examples/) to try:
 
 ```bash
-git clone https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git && cd zirah
+git clone https://github.com/MuhammadMohsinIbrahim/zirah-mcp.git && cd zirah-mcp
 zirah scan examples/malicious/manifest.json
 ```
 
@@ -175,6 +176,28 @@ servers:
   - client: claude-desktop
 ```
 
+### What `zirah discover` reads
+
+`discover` (and `scan --all`, which starts from it) only **reads** these files. It runs
+nothing, makes no network connections, writes nothing and sends nothing anywhere. Files that
+do not exist are skipped; files over 5 MB are skipped with a warning; comments and trailing
+commas (JSONC) are accepted.
+
+| Client | User config | Project config (current directory) |
+|---|---|---|
+| Claude Desktop | Windows `%APPDATA%\Claude\claude_desktop_config.json`, macOS `~/Library/Application Support/Claude/claude_desktop_config.json`, Linux `~/.config/Claude/claude_desktop_config.json` | — |
+| Claude Code | `~/.claude.json` (user servers and per-project servers) | `.mcp.json` |
+| Cursor | `~/.cursor/mcp.json` | `.cursor/mcp.json` |
+| VS Code | `mcp.json` and `settings.json` (`mcp.servers`) in the user folder: Windows `%APPDATA%\Code\User`, macOS `~/Library/Application Support/Code/User`, Linux `~/.config/Code/User` | `.vscode/mcp.json` |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` | — |
+
+It also reads your approved list if there is one (see above).
+
+What the output shows: each server's client, name, command or URL, and the **names** of its
+environment variables and headers. Their **values** are never shown, and command arguments and
+URLs go through the same secret redaction as scan reports (for example `ghp_****`). See
+[PRIVACY.md](PRIVACY.md) for everything Zirah does and does not send.
+
 ### LLM judge
 
 | `--llm` / `ZIRAH_LLM` | Needs |
@@ -274,6 +297,7 @@ Rules with good fixtures, false-positive reports and bug fixes are welcome. See
 [CONTRIBUTING.md](CONTRIBUTING.md) (including how to add a detection rule), the
 [Code of Conduct](CODE_OF_CONDUCT.md) and the [CHANGELOG](CHANGELOG.md).
 Report security problems in Zirah privately, as described in [SECURITY.md](SECURITY.md).
+What Zirah reads and sends is described in [PRIVACY.md](PRIVACY.md).
 
 Development setup:
 
