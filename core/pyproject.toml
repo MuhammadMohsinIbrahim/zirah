@@ -1,12 +1,19 @@
 [project]
 name = "zirah"
-version = "0.1.0.dev0"
+dynamic = ["version"]
 description = "Offline-first security scanner and trust registry for MCP servers."
+readme = "README.md"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Muhammad Mohsin Ibrahim" }]
 requires-python = ">=3.12"
 keywords = ["mcp", "security", "scanner", "ai-agents", "supply-chain"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
     "Typing :: Typed",
@@ -19,12 +26,22 @@ dependencies = [
     "typer>=0.12",
 ]
 
+[project.urls]
+Homepage = "https://github.com/MuhammadMohsinIbrahim/zirah"
+Repository = "https://github.com/MuhammadMohsinIbrahim/zirah"
+Issues = "https://github.com/MuhammadMohsinIbrahim/zirah/issues"
+Changelog = "https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/CHANGELOG.md"
+Security = "https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/SECURITY.md"
+
 [project.scripts]
 zirah = "zirah.cli:app"
 
 [build-system]
 requires = ["hatchling>=1.32.4"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "zirah/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["zirah"]

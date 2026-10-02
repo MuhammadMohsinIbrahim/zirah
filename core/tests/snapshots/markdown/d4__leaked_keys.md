@@ -9,7 +9,7 @@ Severe findings. Do not use this server until they are fixed.
 | Findings | 9 at 8 locations: 5 critical, 4 high |
 | Rule pack | 2026.10.1 |
 | Engines | static |
-| Zirah | 0.1.0.dev0 |
+| Zirah | 0.1.0 |
 
 ### Critical
 

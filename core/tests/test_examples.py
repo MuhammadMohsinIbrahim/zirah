@@ -21,6 +21,7 @@ from zirah.scan import scan
 EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
 MALICIOUS = EXAMPLES / "malicious"
 BENIGN = EXAMPLES / "benign"
+pytestmark = pytest.mark.repo_checkout  # examples/ is not in the sdist
 ROW = re.compile(r"^\| `(/[^`]*)` \| `(D\d+-[A-Z0-9-]+)` \|", re.MULTILINE)
 
 
