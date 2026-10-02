@@ -218,4 +218,4 @@ def test_cli_runs_with_the_flag_and_prints_the_warning() -> None:
     assert result.exit_code == EXIT_FINDINGS
     assert result.stderr.startswith(f"Warning: {EXEC_WARNING}")
     assert "fake-server 9.9.9" in result.stdout
-    assert "--era modern" in result.stdout
+    assert "--era modern" in " ".join(result.stdout.split())  # the target line may wrap
