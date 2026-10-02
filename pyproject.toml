@@ -55,4 +55,4 @@ testpaths = ["core/tests"]
 addopts = "-ra --strict-markers --cov=zirah --cov-report=term-missing"
 
 [tool.coverage.report]
-fail_under = 60
+fail_under = 95

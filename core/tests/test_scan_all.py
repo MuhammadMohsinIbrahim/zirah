@@ -13,10 +13,13 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
+from zirah import scan as scan_mod
+from zirah.analyzers.base import Analyzer, ScanContext
+from zirah.analyzers.d1_tool_poisoning import ToolPoisoning
 from zirah.cli import EXIT_CLEAN, EXIT_ERROR, EXIT_FINDINGS, app
 from zirah.discover import DiscoveredServer
 from zirah.loaders.stdio import EXEC_WARNING
-from zirah.models import ScanSession
+from zirah.models import Engine, Finding, Manifest, Module, ScanSession
 from zirah.scan import scan_all
 
 SERVER = str(Path(__file__).parent / "fixtures" / "servers" / "fake_mcp_server.py")
@@ -193,3 +196,27 @@ def test_cli_scan_all_usage(args: list[str], message: str, fake_home: Path) -> N
     result = CliRunner().invoke(app, args)
     assert result.exit_code == EXIT_ERROR
     assert message in result.stderr
+
+
+def test_cli_scan_all_output_file_not_writable(fake_home: Path, tmp_path: Path) -> None:
+    result = CliRunner().invoke(app, ["scan", "--all", "-o", str(tmp_path)])  # a directory
+    assert result.exit_code == EXIT_ERROR
+    assert "error: cannot write" in result.stderr
+
+
+class Crashing(Analyzer):
+    name = "test-crashing"
+    module = Module.D2
+    engine = Engine.STATIC
+
+    def analyze(self, manifest: Manifest, ctx: ScanContext) -> list[Finding]:
+        raise RuntimeError("boom")
+
+
+def test_cli_scan_all_with_an_incomplete_scan_exits_2(
+    fake_home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(scan_mod, "discover_analyzers", lambda: [Crashing, ToolPoisoning])
+    result = CliRunner().invoke(app, ["scan", "--all", "--fail-on", "none"])
+    assert result.exit_code == EXIT_ERROR
+    assert "(incomplete)" in " ".join(result.stdout.split())

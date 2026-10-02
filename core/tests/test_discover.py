@@ -279,3 +279,33 @@ def test_cli_discover_with_nothing_configured(
 def test_current_platform() -> None:
     expected = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "linux")
     assert discover_mod.current_platform() == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("win32", "windows"), ("darwin", "macos"), ("linux", "linux")]
+)
+def test_current_platform_for_each_system(
+    monkeypatch: pytest.MonkeyPatch, value: str, expected: Platform
+) -> None:
+    monkeypatch.setattr(sys, "platform", value)
+    assert discover_mod.current_platform() == expected
+
+
+def test_windows_reads_claude_desktop_from_appdata(tmp_path: Path) -> None:
+    roaming = tmp_path / "roaming"
+    (roaming / "Claude").mkdir(parents=True)
+    config = {"mcpServers": {"notes": {"command": "notes-server"}}}
+    (roaming / "Claude" / "claude_desktop_config.json").write_text(
+        json.dumps(config), encoding="utf-8"
+    )
+    result = discover(home=tmp_path / "home", platform="windows", env={"APPDATA": str(roaming)})
+    assert [(s.client, s.name) for s in result.servers] == [("claude-desktop", "notes")]
+
+
+def test_unreadable_config_is_a_warning(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    (home / ".cursor").mkdir(parents=True)
+    (home / ".cursor" / "mcp.json").write_bytes(b'{"mcpServers": {"\xff\xfe": {}}}')
+    result = discover(home=home, platform="linux", env={})
+    assert result.servers == ()
+    assert any("cannot read (UnicodeDecodeError)" in w for w in result.warnings)
