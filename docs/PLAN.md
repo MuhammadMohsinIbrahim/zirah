@@ -5,7 +5,7 @@ Ordered checklist from v0.1 to v0.6, derived from `SPEC.md` (the source of truth
 **How to use it**
 - Work top to bottom inside the current release. Each task is one session and one PR on its own branch (`feat/<id>-<slug>`, e.g. `feat/0.1.7-d1-unicode`).
 - Tick `[x]` in the same PR that completes the task.
-- Every task's "done when" also implies the standing rules: tests (at least one malicious and one benign fixture per analyzer), `ruff`, `mypy --strict` and `pytest` green, and coverage ≥ 60%.
+- Every task's "done when" also implies the standing rules: tests (at least one malicious and one benign fixture per analyzer), `ruff`, `mypy --strict` and `pytest` green, and coverage ≥ 95% (CI floor).
 - `[Dn]` names the detection module; `[—]` is infrastructure.
 
 ---
