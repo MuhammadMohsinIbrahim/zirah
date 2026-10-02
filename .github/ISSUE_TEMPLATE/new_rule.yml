@@ -1,0 +1,66 @@
+name: New rule or detection gap
+description: Zirah missed something malicious, or you want to propose a new detection rule.
+title: "rule: "
+labels: [rule]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. See [CONTRIBUTING.md](https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/CONTRIBUTING.md#adding-a-detection-rule)
+        for how rules and fixtures work. **Keep examples harmless:** use `example.invalid`
+        hosts and fake `zirah_fake_...` secrets, and nothing that works as a real attack.
+        If the gap is being exploited in the wild and you would rather not describe it in
+        public, report it privately instead (see SECURITY.md).
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - D1 tool poisoning (tool descriptions and schemas)
+        - D2 prompt injection (prompts, resources, server instructions)
+        - D3 tool shadowing
+        - D4 secrets
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: attack
+    attributes:
+      label: The attack
+      description: What the text makes a model or client do, and why it is harmful.
+    validations:
+      required: true
+  - type: textarea
+    id: malicious
+    attributes:
+      label: Malicious examples
+      description: One or more harmless example texts that should be flagged.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: benign
+    attributes:
+      label: Benign look-alikes
+      description: >-
+        Legitimate wording close to the attack that must NOT be flagged. This is what
+        decides whether a rule can be merged.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: owasp
+    attributes:
+      label: OWASP MCP Top 10 category (optional)
+      placeholder: MCP06
+  - type: input
+    id: references
+    attributes:
+      label: References (optional)
+      description: Write-ups, advisories or papers describing the technique.
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to open a pull request with the rule and fixtures.

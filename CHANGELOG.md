@@ -1,0 +1,47 @@
+# Changelog
+
+All notable changes to Zirah are listed here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and Zirah uses
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0, minor versions may
+change the CLI, the report formats and the data contract.
+
+Rule pack versions (`YYYY.MM.N`) are recorded in every scan result and noted per release.
+
+## [Unreleased]
+
+First release, v0.1: the offline CLI core.
+
+### Added
+
+- `zirah scan` for static manifest JSON files, stdio servers (`--allow-exec`, with a
+  host-execution warning, time and size limits, and the whole process tree killed
+  afterwards), and remote servers over Streamable HTTP or HTTP+SSE (`--transport`).
+- In-house MCP client for MCP protocol versions 2024-11-05, 2025-03-26, 2025-06-18,
+  2025-11-25 and 2026-07-28. It only negotiates and lists tools, prompts and resources; it
+  never calls a tool.
+- Detection modules with YAML rule packs:
+  - **D1 tool poisoning**: invisible Unicode (zero-width, bidi, tag characters, variation
+    selector runs), ANSI escapes and control characters, homoglyph-mixed names, hidden
+    instructions, credential-file requests, covert forwarding, HTML/markdown smuggling, and
+    text aimed at the scanner itself (`D1-SCANNER-EVASION`).
+  - **D2 prompt injection** in prompts, resources and server instructions: instruction
+    overrides, forged chat delimiters, jailbreaks, concealment, system prompt extraction,
+    exfiltration (sensitive data, open destinations, destinations taken from tool output or
+    fetched content), markdown image exfiltration, encoded instructions and scanner evasion.
+  - **D3 tool shadowing** within one manifest.
+  - **D4 secrets** in the manifest and target arguments, always redacted in output.
+  - **D14 discover**: `zirah discover` lists MCP servers configured in Claude Desktop,
+    Claude Code, Cursor, VS Code and Windsurf, read-only and offline, with an optional
+    approved-servers list.
+- `zirah scan --all` scans every discovered server into one `ScanSession`.
+- Explainable trust score (0-100) and grade (A-F): every deducted point is listed against a
+  finding.
+- Reports: terminal, JSON, SARIF 2.1.0 (GitHub code scanning) and markdown.
+- Optional LLM judge for D1-D3 (`--llm ollama|openai|anthropic`, default `none`); untrusted
+  text is fenced as data.
+- `examples/` with a harmless malicious demo server and a benign one (static and stdio).
+- SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue and pull request templates.
+
+Rule pack: 2026.10.1.
+
+[Unreleased]: https://github.com/MuhammadMohsinIbrahim/zirah/commits/main

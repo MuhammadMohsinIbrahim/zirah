@@ -1,0 +1,62 @@
+name: Bug report
+description: Zirah crashed, hung, printed something wrong or did not do what the docs say.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security problems in Zirah itself** (code running without
+        `--allow-exec`, unredacted secrets in output, terminal injection) must not be filed
+        here: see [SECURITY.md](https://github.com/MuhammadMohsinIbrahim/zirah/blob/main/SECURITY.md).
+        Wrong findings on a benign server are **false positives**; use that form instead.
+  - type: input
+    id: version
+    attributes:
+      label: Zirah version
+      description: Output of `zirah --version`.
+      placeholder: zirah 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Other]
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.7"
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command you ran. Remove tokens and other secrets.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the full output or traceback, with secrets removed.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: manifest
+    attributes:
+      label: Minimal manifest (optional)
+      description: >-
+        A small manifest JSON that reproduces the problem. Use example.invalid hosts and
+        fake secrets only.
+      render: json

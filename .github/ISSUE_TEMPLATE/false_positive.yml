@@ -1,0 +1,50 @@
+name: False positive
+description: Zirah reported a finding on text that is legitimate.
+title: "false positive: "
+labels: [false-positive]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. A false-positive fix always comes with a new benign test fixture, so the
+        more realistic the text you share, the better. **Remove any real secrets first.**
+  - type: input
+    id: version
+    attributes:
+      label: Zirah and rule pack version
+      description: The last line of the terminal report, or `rulepack_version` in JSON output.
+      placeholder: "zirah 0.1.0, rule pack 2026.10.1"
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule id
+      placeholder: D2-EXFIL-OPEN-DESTINATION
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location (JSON pointer)
+      placeholder: /prompts/0/description
+  - type: textarea
+    id: text
+    attributes:
+      label: The text that was flagged
+      description: The full field, not only the snippet in the report.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this is legitimate
+      description: What the server does and why it needs this wording.
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server (optional)
+      description: Package name or repository of the server, if public.

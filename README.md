@@ -59,6 +59,13 @@ uv run pytest                            # tests
 uv run ruff check . && uv run mypy core  # lint + types
 ```
 
+## Contributing
+
+Rules with good fixtures, false-positive reports and bug fixes are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) (including how to add a detection rule), the
+[Code of Conduct](CODE_OF_CONDUCT.md) and the [CHANGELOG](CHANGELOG.md).
+Report security problems in Zirah privately, as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 [Apache-2.0](LICENSE)
