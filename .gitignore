@@ -33,7 +33,3 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Local-only agent notes
-CLAUDE.local.md
-.claude/
