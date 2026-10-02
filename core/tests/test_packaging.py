@@ -6,12 +6,16 @@ import re
 import tomllib
 from pathlib import Path
 
+import pytest
+from conftest import REPO_ROOT, in_repo_checkout
+
 from zirah import __version__
 
 CORE = Path(__file__).resolve().parents[1]
 ROOT = CORE.parent
 
 
+@pytest.mark.repo_checkout
 def test_packaged_license_is_the_repository_license() -> None:
     # Hatch only packages files under core/, so LICENSE is copied there; keep it identical.
     assert (CORE / "LICENSE").read_bytes() == (ROOT / "LICENSE").read_bytes()
@@ -33,7 +37,15 @@ def test_pypi_readme_links_are_absolute() -> None:
     assert all(t.startswith(("https://", "#")) for t in targets), targets
 
 
+@pytest.mark.repo_checkout
 def test_changelog_has_a_section_for_this_version() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     heading = rf"^## \[{re.escape(__version__)}\] - \d{{4}}-\d{{2}}-\d{{2}}$"
     assert re.search(heading, changelog, re.MULTILINE)
+
+
+def test_repository_checkout_is_detected() -> None:
+    # Guards the repo_checkout skips: inside the repository (where examples/ exists) they
+    # must never skip.
+    assert in_repo_checkout() == (REPO_ROOT / "examples").is_dir()
+    assert REPO_ROOT == ROOT
