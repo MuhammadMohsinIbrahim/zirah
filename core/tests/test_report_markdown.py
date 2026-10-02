@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from conftest import squashed
 from typer.testing import CliRunner
 
 from zirah.analyzers.base import Analyzer, ScanContext
@@ -68,8 +69,8 @@ def test_invisible_characters_are_rendered_visibly_escaped() -> None:
 
 def test_secrets_stay_redacted() -> None:
     text = markdown.render(fixture_scan("d4/leaked_keys"))
-    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in text
-    assert "zirah_fake_4f9c2e71b8d3a605" not in text
+    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in squashed(text)
+    assert "zirah_fake_4f9c2e71b8d3a605" not in squashed(text)
     assert "****" in text
 
 

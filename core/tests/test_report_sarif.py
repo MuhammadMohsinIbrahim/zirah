@@ -8,6 +8,7 @@ from typing import Any
 
 import jsonschema  # type: ignore[import-untyped]
 import pytest
+from conftest import squashed
 from typer.testing import CliRunner
 
 from zirah.analyzers.base import Analyzer, ScanContext
@@ -144,8 +145,8 @@ def test_output_is_ascii_and_escapes_invisible_characters(tmp_path: Path) -> Non
 
 def test_secrets_stay_redacted() -> None:
     text = sarif.render(fixed_scan(SECRETS))
-    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in text
-    assert "zirah_fake_4f9c2e71b8d3a605" not in text
+    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in squashed(text)
+    assert "zirah_fake_4f9c2e71b8d3a605" not in squashed(text)
 
 
 def test_benign_scan_has_no_results_or_rules() -> None:

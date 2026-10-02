@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
+from conftest import flat, squashed
 from typer.testing import CliRunner
 
 from zirah import __version__
@@ -42,10 +43,10 @@ def test_malicious_scan_shows_grade_score_and_findings_grouped_by_location() -> 
     code, out, _ = invoke("scan", D1)
     assert code == EXIT_FINDINGS
     assert out.index("Grade F") < out.index("CRITICAL")
-    assert 'tool "add" › description' in out
+    assert 'tool "add" › description' in flat(out)
     # four findings at /tools/0/description, one location heading
     assert out.count("/tools/0/description\n") == 1
-    assert "Fix: Remove the request." in out
+    assert "Fix: Remove the request." in flat(out)
 
 
 @pytest.mark.parametrize(
@@ -97,8 +98,8 @@ def test_unwritable_output_is_exit_2(tmp_path: Path) -> None:
 
 def test_secrets_never_reach_the_terminal_report() -> None:
     _, out, _ = invoke("scan", D4)
-    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in out
-    assert "zirah_fake_4f9c2e71b8d3a605" not in out
+    assert "ghp_ZirahFakeTokenNotReal7f3a9c1e2b4d608" not in squashed(out)
+    assert "zirah_fake_4f9c2e71b8d3a605" not in squashed(out)
     assert "****" in out
 
 
@@ -112,7 +113,7 @@ def test_manifest_text_cannot_inject_markup_or_escapes(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     _, out, _ = invoke("scan", str(manifest))
-    assert "[bold red]x[/]" in out
+    assert "[bold red]x[/]" in flat(out)
     assert "[link=https://example.invalid]t[/]" in out
     assert "\x1b" not in out
     assert "\\u001b[2J" in out
@@ -161,7 +162,7 @@ def test_analyzer_failure_warns_and_exits_2(monkeypatch: pytest.MonkeyPatch) -> 
     code, out, err = invoke("scan", D1, "--fail-on", "none")
     assert code == EXIT_ERROR
     assert "warning: analyzer test-cli-crashing failed: RuntimeError: boom" in err
-    assert "the scan is incomplete" in " ".join(out.split())
+    assert "the scan is incomplete" in flat(out)
     assert "Grade F" in out
 
 

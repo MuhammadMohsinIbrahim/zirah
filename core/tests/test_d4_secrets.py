@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 import pytest
+from conftest import squashed
 
 from zirah.analyzers.base import ScanContext, discover_analyzers
 from zirah.analyzers.common import iter_text, redact
@@ -123,7 +124,7 @@ def test_detects_and_redacts(text: str, rule: str, snippet: str, secret: str) ->
     findings = scan(Manifest(instructions=text))
     assert [f.rule_id for f in findings] == [rule]
     assert findings[0].evidence.snippet == snippet
-    assert secret not in findings[0].model_dump_json()
+    assert squashed(secret) not in squashed(findings[0].model_dump_json())
 
 
 @pytest.mark.parametrize(
@@ -160,7 +161,7 @@ def test_target_args_and_location_are_scanned() -> None:
         ("D4-URL-CREDENTIALS", "target:/location", "?token=zira****"),
         ("D4-SECRET-ASSIGNMENT", "target:/args", "api-key zira****"),
     ]
-    assert all(GENERIC not in f.model_dump_json() for f in findings)
+    assert all(GENERIC not in squashed(f.model_dump_json()) for f in findings)
 
 
 def test_secrets_are_found_across_the_manifest() -> None:
@@ -186,7 +187,7 @@ def test_other_modules_redact_secrets_in_their_evidence() -> None:
     d1 = [f for f in findings if f.module is Module.D1]
     assert {f.evidence.location for f in d1} == {"/tools/0/description", "/tools/0/title"}
     for finding in findings:
-        dumped = finding.model_dump_json()
+        dumped = squashed(finding.model_dump_json())
         assert GITHUB not in dumped
         assert ANTHROPIC[:20] not in dumped
 
@@ -204,8 +205,8 @@ def test_no_finding_on_any_fixture_holds_a_whole_secret() -> None:
         }
         findings = [f for cls in discover_analyzers() for f in cls().run(manifest, ctx_rules)]
         for finding in findings:
-            dumped = finding.model_dump_json()
-            leaked = [s for s in secrets if len(s) >= 8 and s in dumped]
+            dumped = squashed(finding.model_dump_json())
+            leaked = [s for s in secrets if len(s) >= 8 and squashed(s) in dumped]
             assert leaked == [], f"{path.name}: {finding.rule_id} leaks a secret"
 
 

@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import pytest
+from conftest import flat, squashed
 from typer.testing import CliRunner
 
 from zirah.cli import EXIT_ERROR, EXIT_FINDINGS, app
@@ -197,7 +198,7 @@ def test_target_kind() -> None:
 def test_secrets_in_arguments_are_redacted_in_the_result() -> None:
     token = "ghp_" + "Zf7a9c1e2b4d6" * 3
     result = scan(PYTHON, [SERVER, "--token", token], allow_exec=True).result
-    assert token not in result.model_dump_json()
+    assert token not in squashed(result.model_dump_json())
     assert result.target.args[-1].endswith("****")
     assert any(
         f.rule_id == "D4-GITHUB-TOKEN" and f.evidence.location == "target:/args"
@@ -208,7 +209,7 @@ def test_secrets_in_arguments_are_redacted_in_the_result() -> None:
 def test_cli_refuses_without_the_flag() -> None:
     result = CliRunner().invoke(app, ["scan", PYTHON, SERVER])
     assert result.exit_code == EXIT_ERROR
-    assert EXEC_WARNING in " ".join(result.stderr.split())
+    assert EXEC_WARNING in flat(result.stderr)
 
 
 def test_cli_runs_with_the_flag_and_prints_the_warning() -> None:
@@ -218,4 +219,4 @@ def test_cli_runs_with_the_flag_and_prints_the_warning() -> None:
     assert result.exit_code == EXIT_FINDINGS
     assert result.stderr.startswith(f"Warning: {EXEC_WARNING}")
     assert "fake-server 9.9.9" in result.stdout
-    assert "--era modern" in " ".join(result.stdout.split())  # the target line may wrap
+    assert "--era modern" in flat(result.stdout)  # the target line may wrap
