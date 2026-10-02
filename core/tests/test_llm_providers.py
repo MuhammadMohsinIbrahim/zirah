@@ -10,6 +10,7 @@ from typing import Any
 
 import httpx
 import pytest
+from conftest import squashed
 
 from zirah.llm import LlmError, LlmRateLimitError, resolve
 from zirah.llm.anthropic import (
@@ -86,8 +87,8 @@ def test_missing_key_is_a_clear_error(spec: str, variable: str) -> None:
 
 def test_repr_never_shows_the_key() -> None:
     for client in (openai(lambda _: httpx.Response(200)), anthropic(lambda _: httpx.Response(200))):
-        assert KEY not in repr(client)
-        assert KEY not in str(vars(client).get("model"))
+        assert KEY not in squashed(repr(client))
+        assert KEY not in squashed(str(vars(client).get("model")))
 
 
 # --- OpenAI ----------------------------------------------------------------------------------
@@ -142,7 +143,7 @@ def test_openai_success() -> None:
 def test_openai_error_paths(response: httpx.Response, error: type[LlmError], message: str) -> None:
     with pytest.raises(error, match=message) as info:
         openai(lambda _: response).complete_json("s", "u", SCHEMA)
-    assert KEY not in str(info.value)
+    assert KEY not in squashed(str(info.value))
 
 
 # --- Anthropic -------------------------------------------------------------------------------
@@ -248,7 +249,7 @@ def test_anthropic_error_paths(
 ) -> None:
     with pytest.raises(error, match=message) as info:
         anthropic(lambda _: response).complete_json("s", "u", SCHEMA)
-    assert KEY not in str(info.value)
+    assert KEY not in squashed(str(info.value))
 
 
 # --- Boundaries --------------------------------------------------------------------------------

@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from conftest import squashed
+
 from zirah import __version__
 from zirah.report import terminal
 from zirah.scan import Scan, scan
@@ -36,7 +38,7 @@ def test_header_comes_first_with_grade_score_and_meaning(tmp_path: Path) -> None
         "1 finding at 1 location: 1 critical",
     ]
     assert "AKIA****" in text
-    assert "AKIAZIRAHFAKE7Q2M4X9" not in text
+    assert "AKIAZIRAHFAKE7Q2M4X9" not in squashed(text)
     assert "Score: 100 - 40 points (deductions rounded up) = 60, capped at 39." in text
 
 

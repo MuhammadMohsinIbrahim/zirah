@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import flat, squashed
 from typer.testing import CliRunner
 
 from zirah import scan as scan_mod
@@ -135,7 +136,7 @@ def test_configured_arguments_run_but_results_are_redacted() -> None:
     run = scan_all([stdio("tokened", "cursor", "--token", TOKEN)], allow_exec=True)
     (entry,) = run.entries
     assert entry.status == "scanned"
-    assert TOKEN not in run.session.model_dump_json()
+    assert TOKEN not in squashed(run.session.model_dump_json())
 
 
 # --- CLI -----------------------------------------------------------------------------------------
@@ -171,7 +172,7 @@ def test_cli_scan_all_with_allow_exec_shows_a_summary_table(fake_home: Path) -> 
     result = CliRunner().invoke(app, ["scan", "--all", "--allow-exec", "--fail-on", "high"])
     assert result.exit_code == EXIT_FINDINGS
     assert result.stderr.startswith(f"Warning: {EXEC_WARNING}")
-    out = " ".join(result.stdout.split())
+    out = flat(result.stdout)
     assert "2 configured servers: 2 scanned, 0 skipped, 0 failed, 0 duplicates." in out
     assert "critical" in out
     assert "none" in out  # the clean remote server
@@ -219,4 +220,4 @@ def test_cli_scan_all_with_an_incomplete_scan_exits_2(
     monkeypatch.setattr(scan_mod, "discover_analyzers", lambda: [Crashing, ToolPoisoning])
     result = CliRunner().invoke(app, ["scan", "--all", "--fail-on", "none"])
     assert result.exit_code == EXIT_ERROR
-    assert "(incomplete)" in " ".join(result.stdout.split())
+    assert "(incomplete)" in flat(result.stdout)

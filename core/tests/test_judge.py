@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import squashed
 
 from zirah.analyzers.d1_tool_poisoning import ToolPoisoning
 from zirah.analyzers.llm_judge import PromptInjectionJudge, ToolPoisoningJudge, ToolShadowingJudge
@@ -259,7 +260,7 @@ def test_evidence_not_in_the_text_falls_back_to_its_start_and_secrets_are_redact
     )
     (finding,) = findings
     assert finding.evidence.snippet.startswith("Deploys the app with key AKIA****")
-    assert "AKIAZIRAHFAKE7Q2M4X9" not in finding.evidence.snippet
+    assert "AKIAZIRAHFAKE7Q2M4X9" not in squashed(finding.evidence.snippet)
 
 
 def test_prompt_hash_is_stable_and_tracks_the_categories() -> None:

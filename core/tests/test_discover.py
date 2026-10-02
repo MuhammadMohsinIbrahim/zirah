@@ -12,6 +12,7 @@ from typing import Any
 
 import httpx
 import pytest
+from conftest import flat, squashed
 from rich.console import Console
 from typer.testing import CliRunner
 
@@ -137,7 +138,7 @@ def test_secrets_never_reach_the_output(tmp_path: Path) -> None:
     outputs = [buffer.export_text(), report.render_json(result), repr(result)]
     for output in outputs:
         for secret in SECRETS:
-            assert secret not in output
+            assert squashed(secret) not in squashed(output)
     data = json.loads(report.render_json(result))
     notes = next(s for s in data["servers"] if s["name"] == "notes")
     assert notes["args"][-1].endswith("****")
@@ -256,13 +257,13 @@ def test_cli_discover_makes_no_network_calls_and_runs_nothing(
     data = json.loads(result.stdout)
     assert len(data["servers"]) == len(EXPECTED)
     for secret in SECRETS:
-        assert secret not in result.stdout
+        assert squashed(secret) not in squashed(result.stdout)
 
     approved = tmp_path / "approved.yaml"
     approved.write_text("servers:\n  - name: filesystem\n", encoding="utf-8")
     result = CliRunner().invoke(app, ["discover", "--approved", str(approved)])
     assert result.exit_code == EXIT_FINDINGS
-    assert "13 servers not on the approved list" in " ".join(result.stdout.split())
+    assert "13 servers not on the approved list" in flat(result.stdout)
 
 
 def test_cli_discover_with_nothing_configured(
@@ -273,7 +274,7 @@ def test_cli_discover_with_nothing_configured(
     monkeypatch.chdir(tmp_path)
     result = CliRunner().invoke(app, ["discover"])
     assert result.exit_code == EXIT_CLEAN
-    assert "0 MCP servers in 0 config files" in result.stdout
+    assert "0 MCP servers in 0 config files" in flat(result.stdout)
 
 
 def test_current_platform() -> None:
