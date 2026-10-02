@@ -9,6 +9,11 @@ Rule pack versions (`YYYY.MM.N`) are recorded in every scan result and noted per
 
 ## [Unreleased]
 
+### Changed
+
+- The PyPI summary and the PyPI README describe what Zirah ships today, a scanner; the
+  trust registry is on the roadmap (v0.3), not part of 0.1.0.
+
 ## [0.1.0] - 2026-10-02
 
 First release, v0.1: the offline CLI core.

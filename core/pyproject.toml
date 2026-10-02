@@ -1,7 +1,7 @@
 [project]
 name = "zirah-mcp"
 dynamic = ["version"]
-description = "Offline-first security scanner and trust registry for MCP servers."
+description = "Offline-first security scanner for MCP servers: tool poisoning, prompt injection, tool shadowing and leaked secrets."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
